@@ -1,4 +1,4 @@
-function [sigbins, acceptance_bounds, true_stat] = gperm2(group1, group2, xvals, yvals, alpha_level, statfcn, iterations, group1_name, group2_name, ploton)
+function [sigbins, acceptance_bounds, true_stat] = gperm2(group1, group2, rbins, cbins, alpha_level, statfcn, iterations, group1_name, group2_name, ploton)
 %GLOBALPERMTEST Computes global acceptance bounds and regions of significance
 %for a given statistic for two sets of multidimensional observations
 %

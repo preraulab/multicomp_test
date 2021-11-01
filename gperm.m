@@ -1,10 +1,10 @@
-function [sig_regions, acceptance_bounds, true_stat, ax] = gperm(varargin)
+function [sigbins_all, sig_regions, acceptance_bounds, true_stat, ax] = gperm(varargin)
 %GLOBALPERMTEST Computes global acceptance bounds and regions of significance
 %for a given statistic for two sets of multidimensional observations
 %
 %   Usage:
 %   globalpermtest() RUNS DEMO
-%   [sig_regions, acceptance_bounds] = globalpermtest(group1, group2, x-values, alpha_level, statfcn, iterations, ploton)
+%   [sig_regions, acceptance_bounds] = globalpermtest(group1, group2, x_bins, alpha_level, statfcn, iterations, group1_name, group2_name, ploton)
 %
 %   Input:
 %   group1, group2: in form <dimensions> x <trials> -- required
@@ -32,7 +32,9 @@ end
 
 
 defaults={'','',[],.05,@(x)mean(x,2),10000,'Group 1','Group 2',1};
-defaults(1:length(varargin))=varargin;
+%Handle defaults
+defaults(setdiff(1:length(varargin), find(cellfun(@isempty,varargin)))) = varargin(~cellfun(@isempty,(varargin)));
+
 
 p1=defaults{1};
 p2=defaults{2};
@@ -44,7 +46,6 @@ iterations=defaults{6};
 group1_name=defaults{7};
 group2_name=defaults{8};
 ploton=defaults{9};
-
 
 locations=size(p1,1);
 if isempty(xvals)
@@ -61,6 +62,8 @@ Np1=size(p1,2);
 
 %Generate null distribution
 null_mat=zeros(locations,iterations);
+
+disp(['Computing test with ' num2str(iterations) ' iterations at alpha level ' num2str(alpha_level) '...']);
 
 parfor i=1:iterations
     %Get a random permutation of the labels
@@ -81,16 +84,16 @@ sorted_null=sort(null_mat,2);
 cutoff_ind = iterations;
 
 % Number of individual trials falling outside the global bounds
-numout=-inf;
+numout=0;
 
 %Compute the citerion for the number out
-out_crit = ceil(alpha_level/2*iterations);
+out_crit = ceil(alpha_level*iterations*2);
 
-if ~(any(any(sorted_null)))
-    gbounds=sorted_null(:,cutoff_ind);
-else
-    %Shrink the bounds until the number of outside trials is %5
-    while numout<=out_crit
+gbounds=sorted_null(:,end);
+
+%Shrink the bounds until the number of outside trials is %alpha
+if out_crit<iterations && out_crit>0
+    while numout<out_crit && cutoff_ind>0
         %Calculate the global bounds
         gbounds=sorted_null(:,cutoff_ind);
         
@@ -100,6 +103,12 @@ else
         %Shrink the bounds
         cutoff_ind = cutoff_ind - 1;
     end
+elseif out_crit>=iterations
+    warning('Global bounds includes all iterations. Increase iterations or reduce p-value');
+    gbounds = zeros(size(sorted_null(:,1)));
+elseif out_crit == 0
+    warning('Global bounds is below precision for number of iterations. Increase iterations or increase p-value');
+    gbounds = sorted_null(:,end);
 end
 
 %Create symmetrical bounds
@@ -167,69 +176,74 @@ end
 
 function demo
 
-%Number of observations for each case
-trials=100;
-%Number of spatial locations
-locations=150;
+%Define dataset
+N1 = 200;
+N2 = 303;
+N = N1+N2;
 
+%Set time resolution
+T = 100;
 
-%Make constant condition
-p1=randn(locations,trials);
+%Initialize data and null matrices
+g1 = zeros(T,N1);
+g2 = zeros(T,N2);
 
-%Make variable condition
-p2=[];
-pos=[linspace(0,1,locations/2) linspace(1,0,locations/2)];
-for i=1:locations
-    p2=[p2; randn(1,trials)+pos(i)];
+%Create functions
+f1 =@(x)normpdf(x)*(rand*5+3);
+f2 =@(x)normpdf(x)*(rand*5+2);
+
+x=linspace(-5,5,T)';
+
+%Generate data
+for ii = 1:N
+    if ii<=N1
+        g1(:,ii) = smooth(f1(x)+randn(size(x))*.25);
+    else
+        g2(:,ii-N1) = smooth(f2(x)+randn(size(x))*.25);
+    end
 end
 
-%Smooth across location to simulate dependency
-for i=1:trials
-    p1(:,i)=smooth(p1(:,i),20,'sgolay');
-    p2(:,i)=smooth(p2(:,i),20,'sgolay');
-end
-
-gperm(p1, p2)
-
-
-% Create annotations
-annotation(gcf,'textbox',...
-    [0.748210023866354 0.0764946921443736 0.112171837708825 0.0307855626326964],...
-    'String',{'Significant Regions'},...
-    'FontWeight','bold',...
-    'FontSize',12,...
-    'FitBoxToText','off',...
-    'LineStyle','none');
-
-annotation(gcf,'textbox',...
-    [0.421551312649173 0.206176220806794 0.16257756563245 0.0307855626326964],...
-    'String',{'Null Distribution of Permuted Means'},...
-    'FontWeight','bold',...
-    'FontSize',12,...
-    'FitBoxToText','off',...
-    'LineStyle','none');
-
-annotation(gcf,'textbox',...
-    [0.102028639618147 0.136112526539278 0.0772792362768496 0.0337855626326964],...
-    'String',{'Observed Mean'},...
-    'FontWeight','bold',...
-    'FontSize',12,...
-    'FitBoxToText','off',...
-    'LineStyle','none');
-
-annotation(gcf,'textbox',...
-    [0.125011933174232 0.26243949044586 0.105011933174224 0.0307855626326964],...
-    'String',{'95% Acceptance Bands'},...
-    'FontSize',12,...
-    'FontWeight','bold',...
-    'FitBoxToText','off',...
-    'LineStyle','none');
-
-annotation(gcf,'arrow',[0.220167064439141 0.265513126491647],...
-    [0.271823779193206 0.266454352441614]);
-
-annotation(gcf,'arrow',[0.220167064439141 0.266109785202864],...
-    [0.267515923566879 0.200636942675159]);
-
-annotation(gcf,'arrow',[0.1736276849642 0.223150357995227],...
-    [0.155050955414013 0.156050955414013]);
+gperm(g1, g2)
+%
+%
+% % Create annotations
+% annotation(gcf,'textbox',...
+%     [0.748210023866354 0.0764946921443736 0.112171837708825 0.0307855626326964],...
+%     'String',{'Significant Regions'},...
+%     'FontWeight','bold',...
+%     'FontSize',12,...
+%     'FitBoxToText','off',...
+%     'LineStyle','none');
+%
+% annotation(gcf,'textbox',...
+%     [0.421551312649173 0.206176220806794 0.16257756563245 0.0307855626326964],...
+%     'String',{'Null Distribution of Permuted Means'},...
+%     'FontWeight','bold',...
+%     'FontSize',12,...
+%     'FitBoxToText','off',...
+%     'LineStyle','none');
+%
+% annotation(gcf,'textbox',...
+%     [0.102028639618147 0.136112526539278 0.0772792362768496 0.0337855626326964],...
+%     'String',{'Observed Mean'},...
+%     'FontWeight','bold',...
+%     'FontSize',12,...
+%     'FitBoxToText','off',...
+%     'LineStyle','none');
+%
+% annotation(gcf,'textbox',...
+%     [0.125011933174232 0.26243949044586 0.105011933174224 0.0307855626326964],...
+%     'String',{'95% Acceptance Bands'},...
+%     'FontSize',12,...
+%     'FontWeight','bold',...
+%     'FitBoxToText','off',...
+%     'LineStyle','none');
+%
+% annotation(gcf,'arrow',[0.220167064439141 0.265513126491647],...
+%     [0.271823779193206 0.266454352441614]);
+%
+% annotation(gcf,'arrow',[0.220167064439141 0.266109785202864],...
+%     [0.267515923566879 0.200636942675159]);
+%
+% annotation(gcf,'arrow',[0.1736276849642 0.223150357995227],...
+%     [0.155050955414013 0.156050955414013]);

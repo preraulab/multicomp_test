@@ -8,6 +8,7 @@ function global_bounds = global_perm_test_2d(data_matrix, group, iterations, sta
 %   Input:
 %   data_matrix: data in form <R,C> x <trials> -- required
 %   groups: logical vector defining two groups
+%   iterations: bootstrap iterations (default: 1000)
 %   statfcn: handle statistic to compute across trials (Default: @(x)nanmean(x,3) MUST COMPUTE ACROSS DIM 3)
 %   plot_on: logical - plot output (default: true)
 %
@@ -38,12 +39,12 @@ end
 
 
 %Set default iterations
-if nargin<3
+if nargin < 3 || isempty(iterations)
     iterations=1000;
 end
 
 %Set default boostrap statistica function
-if nargin<4
+if nargin<4 || isempty(statfcn)
     statfcn=@(x)nanmean(x,3);
 end
 
@@ -84,7 +85,7 @@ diff_all=zeros(R*C,iterations);
 
 progressbar();
 
-for ii=1:iterations
+parfor ii=1:iterations
     %Create random permutation
     inds=randperm(N);
     
@@ -96,6 +97,8 @@ for ii=1:iterations
     diff_all(:,ii)=reshape((statfcn(data(:,:,inds0))-statfcn(data(:,:,inds1))),1,R*C);
     progressbar(ii/iterations);
 end
+
+progressbar(1);
 
 %Sort the trials for ease of computing the pointwise percentile
 sdiff_all=sort(diff_all,2);
@@ -145,7 +148,7 @@ if plot_on
     data_stat_mat = statfcn(data(:,:,~group))-statfcn(data(:,:,group));
     imagesc(data_stat_mat);
     hold on
-    contour(abs(global_bounds),[.95 .95],'color','k');
+    contour(abs(global_bounds),[.95 .95],'color','k', 'LineWidth', 1.5);
     colormap(gca,colormap(gca,flipud(redbluemap(1024,0))))
     axis xy;
     axis tight

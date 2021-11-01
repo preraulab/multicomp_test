@@ -92,6 +92,9 @@ if nargin==1
     %x-values
     xvals=1:locations;
     
+    group1_name = 'Group 1';
+    group2_name = 'Group 2';
+    
     if strcmpi(varargin{1},'var') || strcmpi(varargin{1},'variance')
         %Stat function
         statfcn=@(x)var(x,[],2);

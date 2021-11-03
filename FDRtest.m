@@ -1,27 +1,26 @@
-function [sigbins_all, sig_regions] = FDRtest(group1, group2, alpha_level, iterations, ploton)
-%GLOBALPERMTEST Computes global acceptance bounds and regions of significance
-%for a given statistic for two sets of multidimensional observations
+function [sigbins_all, p_adj, p_values] = FDRtest(group1, group2, alpha_level, iterations, ploton)
+%FDRTEST Computes FDR regions of significance 
 %
-%   Usage:
-%   globalpermtest() RUNS DEMO
-%   [sig_regions, acceptance_bounds] = globalpermtest(group1, group2, x_bins, alpha_level, statfcn, iterations, group1_name, group2_name, ploton)
+%   [sigbins, p_adj, p_values] =  FDRtest(group1, group2, alpha_level, iterations, ploton)
 %
 %   Input:
 %   group1, group2: in form <dimensions> x <trials> -- required
-%   alpha_level:  global acceptance alpha (Default: 0.05)x a
-%   statfcn: handle statistic to compute across trials (Default: @(x)mean(x,2) MUST COMPUTE ACROSS DIM 2)
-%   ploton: 0 no plot, 1 plot traces (default), 2 plot mean and 2*standard errors     % Previously boolean for plot output (Default: true)
+%   alpha_level:  level for FDR acceptance (Default: 0.1)
+%   iterations: if numeric, perform a permulation t-test with the given
+%   number of iterations (default: false = single t-test)
+%   ploton: (default: true)
 %
 %   Output:
-%   sig_regions: A cell array of contiguous significant dimensions
-%   acceptance_bounds: the 2 x <dimensions> global acceptance bounds at a level defined by alpha_level
+%   sigbins: A matrix of signifiance bins
+%   p_adj: Adjusted p-values
+%   p_values: raw p-values
 %
 %   Example:
-%      globalpermtest(); %RUNS DEMO
+%      FDRtest(); %RUNS DEMO
 %
 %   Copyright 2021 Michael J. Prerau, Ph.D.
 %
-%   Last modified 11/01/2021
+%   Last modified 11/03/2021
 %********************************************************************
 
 %Call the examples for no input
@@ -29,7 +28,6 @@ if nargin==0
     demo;
     return;
 end
-
 
 if nargin<3 || isempty(alpha_level)
     alpha_level = 0.1;
@@ -48,23 +46,25 @@ p1 = group1(:,any(~isnan(group1)));
 p2 = group2(:,any(~isnan(group2)));
 
 if iterations
-    pvalues = mattest(p1,p2,'permute',iterations);
+    p_values = mattest(p1,p2,'permute',iterations);
 else
-    [~,pvalues]=ttest2(p1',p2');
+    [~,p_values]=ttest2(p1',p2');
 end
 
-padj = mafdr(pvalues,'BHFDR',true);
+p_adj = mafdr(p_values,'BHFDR',true);
 
 %Find the significant bins
-sigbins_all=padj<alpha_level;
-[cons_all,sig_regions]=consecutive(sigbins_all);
+sigbins_all = p_adj<alpha_level;
+
 
 %Plot the results
 if ploton
+    [cons_all,sig_regions]=consecutive(sigbins_all);
+    
     figure('units','normalized','position',[0 0 1 1],'color','w');
     hold all;
-    xvals = 1:length(padj);
-    plot(xvals, padj);
+    xvals = 1:length(p_adj);
+    plot(xvals, p_adj);
     hline(alpha_level);
     
     %Plot significant regions

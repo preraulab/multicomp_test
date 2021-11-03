@@ -78,6 +78,8 @@ end
 %Compute the actual stat for the existing groups
 data_stat=reshape((statfcn(data(:,:,~group))-statfcn(data(:,:,group))),1,R*C);
 
+error('DO NOT USE THIS CODE!!!!');
+
 disp('   Doing bootstrap iterations...');
 %Generate two groups boostrap samples from the shuffled distribution and compute the
 %difference in means between them
@@ -126,7 +128,8 @@ else
         
         %Check the number out of bounds
         numout=sum(any(~(sdiff_all>=lo) & (diff_all<=hi)));
-        
+        numout2=sum(any(~((diff_all>=lo) & (diff_all<=hi))));
+        disp([numout numout2]);
         %Compute the significance level for all points below the threshold
         sig_inds_lo=data_stat'<=gbounds(:,1) & ~signifiance_matrix;
         signifiance_matrix(sig_inds_lo)=-(1-numout/iterations);

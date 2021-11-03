@@ -1,32 +1,87 @@
-function [sigbins, acceptance_bounds, true_stat] = FDRtest2(group1, group2, alpha_level, iterations, ploton)
-%GLOBALPERMTEST Computes global acceptance bounds and regions of significance
-%for a given statistic for two sets of multidimensional observations
+function [sigbins, p_adj, p_values] =  FDRtest2(group1, group2, alpha_level, iterations, ploton)
+%FDRtest2 Computes FDR regions of significance for a 2d matrix
 %
 %   Usage:
-%   globalpermtest() RUNS DEMO
-%   [sig_regions, acceptance_bounds] = gperm2(group1, group2, xvals, yvals, alpha_level, statfcn, iterations, ploton)
+%   FDRtest2() RUNS DEMO
+%   [sigbins, p_adj, p_values] =  FDRtest2(group1, group2, alpha_level, iterations, ploton)
 %
 %   Input:
 %   group1, group2: in form <dimensions> x <trials> -- required
-%   alpha_level:  global acceptance alpha (Default: 0.05)
-%   statfcn: handle statistic to compute across trials (Default: @(x)nanmean(x,2) MUST COMPUTE ACROSS DIM 2)
+%   alpha_level:  level for FDR acceptance (Default: 0.1)
+%   iterations: if numeric, perform a permulation t-test with the given
+%   number of iterations (default: false = single t-test)
 %   ploton: (default: true)
 %
 %   Output:
-%   sig_regions: A cell array of contiguous significant dimensions
-%   acceptance_bounds: the 2 x <dimensions> global acceptance bounds at a level defined by alpha_level
+%   sigbins: A matrix of signifiance bins
+%   p_adj: Adjusted p-values
+%   p_values: raw p-values
 %
 %   Example:
-%      globalpermtest(); %RUNS DEMO
+%      FDRtest2(); %RUNS DEMO
 %
 %   Copyright 2021 Michael J. Prerau, Ph.D.
 %
-%   Last modified 11/01/2021
+%   Last modified 11/03/2021
 %********************************************************************
 
 %Call the examples for no input
 if nargin ==0
+   demo;
+   return;
+end
+
+%%
+%Get group sizes
+[R,C,N1] = size(group1);
+[R2,C2,N2] = size(group2);
+
+%Check that they are the same size
+assert(R == R2 && C == C2,'Group dims must be the same');
+
+%Set up default parameters
+if nargin<3 || isempty(alpha_level)
+    alpha_level = 0.1;
+end
+
+if nargin<4 || isempty(iterations)
+    iterations = false;
+end
+
+if nargin <5
+    ploton = true;
+end
+
+%Reshape to linear
+g1_redim = reshape(group1,size(group1,1)*size(group1,2),size(group1,3));
+g2_redim = reshape(group2,size(group2,1)*size(group2,2),size(group2,3));
+
+%Compute linear perm test with global bounds
+[linear_sigbins, linear_p_adj, linear_p_values] = FDRtest(g1_redim, g2_redim,  alpha_level,  iterations, false);
+
+%Reshape output
+sigbins = reshape(linear_sigbins, R,C);
+p_adj = reshape(linear_p_adj, R,C);
+p_values = reshape(linear_p_values, R,C);
+
+%Plot results
+if ploton
+    figure
+    hold all
+    imagesc(nanmean(reshape(g1_redim, R, C, N1),3)-nanmean(reshape(g2_redim, R, C, N2),3));
+    cx = climscale;
+    caxis(max(abs(cx))*[-1 1]);
+    colormap(redbluemap);
+    colorbar
+    if(any(sigbins(:)))
+        contour(sigbins,[1 1],'color','k','linewidth',1.5)
+    end
     
+    axis tight;
+end
+
+function demo
+ 
     %Define dataset
     N1 = 20;
     N2 = 33;
@@ -50,53 +105,7 @@ if nargin ==0
             group2(:,:,ii-N1) = f2(T);
         end
     end
-end
-
-%%
-%Get group sizes
-[R,C,N1] = size(group1);
-[R2,C2,N2] = size(group2);
-
-%Check that they are the same size
-assert(R == R2 && C == C2,'Group dims must be the same');
-
-
-if nargin<3 || isempty(alpha_level)
-    alpha_level = 0.1;
-end
-
-if nargin<4 || isempty(iterations)
-    iterations = false;
-end
-
-if nargin <5
-    ploton = true;
-end
-
-%Reshape to linear
-g1_redim = reshape(group1,size(group1,1)*size(group1,2),size(group1,3));
-g2_redim = reshape(group2,size(group2,1)*size(group2,2),size(group2,3));
-
-%Compute linear perm test with global bounds
-[linear_sigbins] = FDRtest(g1_redim, g2_redim,  alpha_level,  iterations, false);
-
-%Reshape output
-sigbins = reshape(linear_sigbins, R,C);
-
-if ploton
-    figure
-    hold all
-    imagesc(nanmean(reshape(g1_redim, R, C, N1),3)-nanmean(reshape(g2_redim, R, C, N2),3));
-    cx = climscale;
-    caxis(max(abs(cx))*[-1 1]);
-    colormap(redbluemap);
-    colorbar
-    if(any(sigbins(:)))
-        contour(sigbins,[1 1],'color','k','linewidth',1.5)
-    end
     
-    axis tight;
-end
-
+    
 
 

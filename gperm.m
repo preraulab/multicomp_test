@@ -107,8 +107,6 @@ if out_crit<iterations && out_crit>0
         %Check the number out of bounds
         numout=sum(any(null_mat>=gbounds & ~isnan(null_mat)));
         
-%         disp(numout);
-        
         %Shrink the bounds
         cutoff_ind = cutoff_ind - 1;
         

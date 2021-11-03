@@ -1,4 +1,4 @@
-function [sigbins, acceptance_bounds, true_stat] = gperm2(group1, group2,  alpha_level, statfcn, iterations, ploton)
+function [sigbins, acceptance_bounds, true_stat] = FDRtest2(group1, group2, alpha_level, iterations, ploton)
 %GLOBALPERMTEST Computes global acceptance bounds and regions of significance
 %for a given statistic for two sets of multidimensional observations
 %
@@ -39,8 +39,8 @@ if nargin ==0
     group2 = zeros(T,T,N2);
     
     %Create functions
-    f1 =@(x)peaks(x)*rand*10 + randn(T)*.5;
-    f2 =@(x)fliplr(peaks(x))*rand*10 + randn(T)*.5;
+    f1 =@(x)peaks(x)*rand*10 + randn(T)*5;
+    f2 =@(x)fliplr(peaks(x))*rand*10 + randn(T)*5;
     
     %Generate data
     for ii = 1:N
@@ -60,19 +60,16 @@ end
 %Check that they are the same size
 assert(R == R2 && C == C2,'Group dims must be the same');
 
+
 if nargin<3 || isempty(alpha_level)
-    alpha_level = 0.05;
+    alpha_level = 0.1;
 end
 
-if nargin<4 || isempty(statfcn)
-    statfcn = @(x)nanmean(x,2);
+if nargin<4 || isempty(iterations)
+    iterations = false;
 end
 
-if nargin<5 || isempty(iterations)
-    iterations = 100000;
-end
-
-if nargin <6
+if nargin <5
     ploton = true;
 end
 
@@ -81,13 +78,10 @@ g1_redim = reshape(group1,size(group1,1)*size(group1,2),size(group1,3));
 g2_redim = reshape(group2,size(group2,1)*size(group2,2),size(group2,3));
 
 %Compute linear perm test with global bounds
-[linear_sigbins, ~, linear_bounds, linear_true_stat] = gperm(g1_redim, g2_redim, alpha_level, statfcn, iterations, false);
+[linear_sigbins] = FDRtest(g1_redim, g2_redim,  alpha_level,  iterations, false);
 
 %Reshape output
 sigbins = reshape(linear_sigbins, R,C);
-acceptance_bounds = reshape(linear_bounds, R,C);
-% acceptance_bounds(:,:,2) = reshape(linear_bounds(:,2), R,C);
-true_stat = reshape(linear_true_stat, R,C);
 
 if ploton
     figure
@@ -97,7 +91,11 @@ if ploton
     caxis(max(abs(cx))*[-1 1]);
     colormap(redbluemap);
     colorbar
-    contour(sigbins,1,'color','k', 'LineWidth', 1.5);
+    if(any(sigbins(:)))
+        contour(sigbins,[1 1],'color','k','linewidth',1.5)
+    end
+    
+    axis tight;
 end
 
 

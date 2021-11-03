@@ -1,4 +1,4 @@
-function [sigbins_all, sig_regions, acceptance_bounds, true_stat, ax] = gperm(varargin)
+function [sigbins_all, sig_regions, acceptance_bounds, true_stat] = gperm(group1, group2, alpha_level, statfcn, iterations, ploton)
 %GLOBALPERMTEST Computes global acceptance bounds and regions of significance
 %for a given statistic for two sets of multidimensional observations
 %
@@ -8,7 +8,7 @@ function [sigbins_all, sig_regions, acceptance_bounds, true_stat, ax] = gperm(va
 %
 %   Input:
 %   group1, group2: in form <dimensions> x <trials> -- required
-%   alpha_level:  global acceptance alpha (Default: 0.05)
+%   alpha_level:  global acceptance alpha (Default: 0.05)x a
 %   statfcn: handle statistic to compute across trials (Default: @(x)mean(x,2) MUST COMPUTE ACROSS DIM 2)
 %   ploton: 0 no plot, 1 plot traces (default), 2 plot mean and 2*standard errors     % Previously boolean for plot output (Default: true)
 %
@@ -31,40 +31,43 @@ if nargin==0
 end
 
 
-defaults={'','',[],.05,@(x)mean(x,2),10000,'Group 1','Group 2',1};
-%Handle defaults
-defaults(setdiff(1:length(varargin), find(cellfun(@isempty,varargin)))) = varargin(~cellfun(@isempty,(varargin)));
-
-
-p1=defaults{1};
-p2=defaults{2};
-xvals=defaults{3};
-
-alpha_level=defaults{4};
-statfcn=defaults{5};
-iterations=defaults{6};
-group1_name=defaults{7};
-group2_name=defaults{8};
-ploton=defaults{9};
-
-locations=size(p1,1);
-if isempty(xvals)
-    xvals=1:locations;
+if nargin<3 || isempty(alpha_level)
+    alpha_level = 0.05;
 end
 
-%The difference in mean activity between the two scenarios
-true_stat=statfcn(p1)-statfcn(p2);
+if nargin<4 || isempty(statfcn)
+    statfcn = @(x)nanmean(x,2);
+end
+
+if nargin<5 || isempty(iterations)
+    iterations = 100000;
+end
+
+if nargin <6 || isempty(ploton)
+    ploton = true;
+end
+
+%Remove nan dimensions
+p1 = group1(:,any(~isnan(group1)));
+p2 = group2(:,any(~isnan(group2)));
+
+[R, C] = size(p1);
 
 %Combine both groups
 all=[p1 p2];
 
 Np1=size(p1,2);
 
+%The difference in mean activity between the two scenarios
+true_stat=statfcn(p1)-statfcn(p2);
+
 %Generate null distribution
-null_mat=zeros(locations,iterations);
+null_mat=zeros(R,iterations);
 
 disp(['Computing test with ' num2str(iterations) ' iterations at alpha level ' num2str(alpha_level) '...']);
 
+%Generate null distribution
+disp('Generating null distribution...');
 parfor i=1:iterations
     %Get a random permutation of the labels
     inds=randperm(size(all,2));
@@ -87,22 +90,32 @@ cutoff_ind = iterations;
 numout=0;
 
 %Compute the citerion for the number out
-out_crit = ceil(alpha_level*iterations*2);
+out_crit = ceil(alpha_level*iterations);
 
 gbounds=sorted_null(:,end);
+
+h = waitbar(0,'Computing bounds...');
+
+disp(['Out crit: ' num2str(out_crit) ' out of ' num2str(iterations) ' = ' num2str(out_crit/iterations)]);
 
 %Shrink the bounds until the number of outside trials is %alpha
 if out_crit<iterations && out_crit>0
     while numout<out_crit && cutoff_ind>0
         %Calculate the global bounds
-        gbounds=sorted_null(:,cutoff_ind);
+        gbounds=sorted_null(:,cutoff_ind)+1e-5;
         
         %Check the number out of bounds
-        numout=sum(any(null_mat>=gbounds));
+        numout=sum(any(null_mat>=gbounds & ~isnan(null_mat)));
+        
+%         disp(numout);
         
         %Shrink the bounds
         cutoff_ind = cutoff_ind - 1;
+        
+        waitbar(numout/out_crit,h);
     end
+
+    close(h);
 elseif out_crit>=iterations
     warning('Global bounds includes all iterations. Increase iterations or reduce p-value');
     gbounds = zeros(size(sorted_null(:,1)));
@@ -111,55 +124,33 @@ elseif out_crit == 0
     gbounds = sorted_null(:,end);
 end
 
+disp(['Found bounds to exclude ' num2str(numout) ' = ' num2str(numout/iterations)]);
+
+alpha_diff = alpha_level - (numout/iterations);
+if abs(alpha_diff)>0.01
+warning(['Difference between alpha-level and p-value is large: ' num2str(alpha_diff) '. Results likely inaccurate. Increase iterations or de-noise data.']);
+end
+
 %Create symmetrical bounds
 hi = gbounds;
-lo = -gbounds;
+% lo = -gbounds;
 
 %Find the significant bins
-sigbins_all=(true_stat>=hi | true_stat<=lo);
-acceptance_bounds=[hi,lo];
+sigbins_all=(abs(true_stat)>=hi);% | true_stat<=lo);
+acceptance_bounds=hi;%[hi,lo];
 [cons_all,sig_regions]=consecutive(sigbins_all);
 
 %Plot the results
 if ploton
-    figure1=figure('units','normalized','position',[0 0 1 1],'color','w');
-    
-    ax(1)  = axes('Parent',figure1,...
-        'Position',[0.08 0.376666666666667 0.87 0.246666666666667*2]);
-    ax(2)  = axes('Parent',figure1,'Position',[0.08 0.05 0.87 0.246666666666667]);
-    
-    linkaxes(ax,'x');
-    
-    axes(ax(1))
-    hold on;
-    if ploton==2
-        m1 = mean(p1,2,'omitnan');
-        se1 = std(p1,0,2,'omitnan')/sqrt(size(p1,2));
-        lo1 = m1-2*squeeze(se1);
-        hi1 = m1+2*squeeze(se1);
-        shadebounds(xvals, m1, hi1, lo1, 'r', [1 .7 .7], 'none');
-        m2 = mean(p2,2,'omitnan');
-        se2 = std(p2,0,2,'omitnan')/sqrt(size(p2,2));
-        lo2 = m2-2*squeeze(se2);
-        hi2 = m2+2*squeeze(se2);
-        shadebounds(xvals, m2, hi2, lo2, 'b', [.7 .7 1], 'none');
-    else
-        plot(xvals,p1,'r');
-        plot(xvals,p2,'b');
+    xvals = 1:length(sigbins_all);
+    figure('units','normalized','position',[0 0 1 1],'color','w');
+    if iterations<1000
+    plot(xvals, null_mat','color',[.8 .8 .8]);
     end
-    title([group1_name ' vs. ' group2_name],'fontsize',15);
-    axis tight;
-    xlim(xvals([1 end]));
-    
-    axes(ax(2))
     hold on;
-    
-    %Plot global acceptance bounds
-    plot(xvals,acceptance_bounds,'r','linewidth',2);
-    %Plot data mean
-    plot(xvals,true_stat,'b','linewidth',2);
-    axis tight
-    
+    plot(xvals,hi,'r','linewidth',2);
+    plot(xvals, abs(true_stat),'k','linewidth',2);
+
     %Plot significant regions
     yl=ylim;
     for i=1:length(cons_all)
@@ -167,12 +158,10 @@ if ploton
         h=fill(xvals([inds(1) inds(1) inds(end) inds(end)]),[yl(1) yl(2) yl(2) yl(1)],'g','edgecolor','none');
         uistack(h,'bottom');
     end
-    axis tight;
-    
-    ylabel('Difference Statistic','fontsize',12);
-    title('Global Acceptance Test','fontsize',15);
-    
+    axis tight;  
 end
+end
+
 
 function demo
 
@@ -197,10 +186,11 @@ x=linspace(-5,5,T)';
 %Generate data
 for ii = 1:N
     if ii<=N1
-        g1(:,ii) = smooth(f1(x)+randn(size(x))*.25);
+        g1(:,ii) = smooth(f1(x)+randn(size(x))*.125);
     else
-        g2(:,ii-N1) = smooth(f2(x)+randn(size(x))*.25);
+        g2(:,ii-N1) = smooth(f2(x)+randn(size(x))*.125);
     end
 end
 
-gperm(g1, g2)
+gperm(g1, g2);
+end

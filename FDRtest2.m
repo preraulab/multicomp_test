@@ -68,19 +68,20 @@ p_values = reshape(linear_p_values, R,C);
 if ploton
     figure
     hold all
+  
     imagesc(nanmean(reshape(g1_redim, R, C, N1),3)-nanmean(reshape(g2_redim, R, C, N2),3));
+    
     cx = climscale;
     caxis(max(abs(cx))*[-1 1]);
     colormap(redbluemap);
     colorbar
     
+    %Plot significant regions as a contour
     if(any(sigbins(:)))
         [~, hc] = contour(sigbins,[1 1],'color','k','linewidth',1.5);
         legend(hc,'Regions of Significance');
     end
-    
-    
-    
+   
     axis tight;
 end
 

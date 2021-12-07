@@ -67,6 +67,8 @@ if ploton
     
     %Plot significant regions
     yl=ylim;
+        
+    %Plot regions of significance
     h_r = [];
     
     for ii = 1:length(cons_all)
@@ -77,6 +79,7 @@ if ploton
         end
     end
     
+    %Plot adjusted pvalues and threshold line
     h_pa = plot(xvals, p_adj,'linewidth',2,'color','b');
     h_t = hline(alpha_level,'color','k','linestyle','--');
     

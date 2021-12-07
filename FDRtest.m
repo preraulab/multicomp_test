@@ -73,6 +73,7 @@ if ploton
     
     for ii = 1:length(cons_all)
         inds = sig_regions{ii};
+        
         if ~isempty(inds)
             h_sigregions(ii) = fill(xvals([inds(1) inds(1) inds(end) inds(end)]),[yl(1) yl(2) yl(2) yl(1)],'g','edgecolor','none');
             uistack(h_sigregions,'bottom');

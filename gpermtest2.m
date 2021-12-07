@@ -1,10 +1,10 @@
-function [sigbins, acceptance_bounds, true_stat] = gperm2(group1, group2,  alpha_level, statfcn, iterations, ploton)
-%GLOBALPERMTEST Computes global acceptance bounds and regions of significance
+function [sigbins, acceptance_bounds, true_stat] = gpermtest2(group1, group2,  alpha_level, statfcn, iterations, ploton)
+%gpermtest2 Computes global acceptance bounds and regions of significance
 %for a given statistic for two sets of multidimensional observations
 %
 %   Usage:
-%   globalpermtest() RUNS DEMO
-%   [sig_regions, acceptance_bounds] = gperm2(group1, group2, xvals, yvals, alpha_level, statfcn, iterations, ploton)
+%   gpermtest2() RUNS DEMO
+%   [sig_regions, acceptance_bounds] = gpermtest2(group1, group2, xvals, yvals, alpha_level, statfcn, iterations, ploton)
 %
 %   Input:
 %   group1, group2: in form <dimensions> x <trials> -- required
@@ -17,7 +17,7 @@ function [sigbins, acceptance_bounds, true_stat] = gperm2(group1, group2,  alpha
 %   acceptance_bounds: the 2 x <dimensions> global acceptance bounds at a level defined by alpha_level
 %
 %   Example:
-%      globalpermtest(); %RUNS DEMO
+%      gpermtest2(); %RUNS DEMO
 %
 %   Copyright 2021 Michael J. Prerau, Ph.D.
 %
@@ -25,7 +25,7 @@ function [sigbins, acceptance_bounds, true_stat] = gperm2(group1, group2,  alpha
 %********************************************************************
 
 %Call the examples for no input
-if nargin ==0
+if nargin == 0
     
     %Define dataset
     N1 = 20;
@@ -81,12 +81,12 @@ g1_redim = reshape(group1,size(group1,1)*size(group1,2),size(group1,3));
 g2_redim = reshape(group2,size(group2,1)*size(group2,2),size(group2,3));
 
 %Compute linear perm test with global bounds
-[linear_sigbins, ~, linear_bounds, linear_true_stat] = gperm(g1_redim, g2_redim, alpha_level, statfcn, iterations, false);
+[linear_sigbins, ~, linear_bounds, linear_true_stat] = gpermtest(g1_redim, g2_redim, alpha_level, statfcn, iterations, false);
 
 %Reshape output
 sigbins = reshape(linear_sigbins, R,C);
 acceptance_bounds = reshape(linear_bounds, R,C);
-% acceptance_bounds(:,:,2) = reshape(linear_bounds(:,2), R,C);
+
 true_stat = reshape(linear_true_stat, R,C);
 
 if ploton
@@ -97,7 +97,11 @@ if ploton
     caxis(max(abs(cx))*[-1 1]);
     colormap(redbluemap);
     colorbar
-    contour(sigbins,1,'color','k', 'LineWidth', 1.5);
+    
+    if any(sigbins,'all')
+        [~,h_sigregions] = contour(sigbins,1,'color','k', 'LineWidth', 1.5);
+        legend(h_sigregions,'Significant Regions');
+    end
 end
 
 

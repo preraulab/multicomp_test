@@ -1,10 +1,10 @@
-function [sigbins_all, sig_regions, acceptance_bounds, true_stat] = gperm(group1, group2, alpha_level, statfcn, iterations, ploton)
-%GLOBALPERMTEST Computes global acceptance bounds and regions of significance
+function [sigbins_all, sig_regions, acceptance_bounds, true_stat] = gpermtest(group1, group2, alpha_level, statfcn, iterations, ploton)
+%GPERMTEST Computes global acceptance bounds and regions of significance
 %for a given statistic for two sets of multidimensional observations
 %
 %   Usage:
-%   globalpermtest() RUNS DEMO
-%   [sig_regions, acceptance_bounds] = globalpermtest(group1, group2, x_bins, alpha_level, statfcn, iterations, group1_name, group2_name, ploton)
+%   gpermtest() RUNS DEMO
+%   [sig_regions, acceptance_bounds] = gpermtest(group1, group2, x_bins, alpha_level, statfcn, iterations, group1_name, group2_name, ploton)
 %
 %   Input:
 %   group1, group2: in form <dimensions> x <trials> -- required
@@ -17,7 +17,7 @@ function [sigbins_all, sig_regions, acceptance_bounds, true_stat] = gperm(group1
 %   acceptance_bounds: the 2 x <dimensions> global acceptance bounds at a level defined by alpha_level
 %
 %   Example:
-%      globalpermtest(); %RUNS DEMO
+%      gpermtest(); %RUNS DEMO
 %
 %   Copyright 2021 Michael J. Prerau, Ph.D.
 %
@@ -112,7 +112,7 @@ if out_crit<iterations && out_crit>0
         
         waitbar(numout/out_crit,h_sigregions);
     end
-
+    
     close(h_sigregions);
 elseif out_crit>=iterations
     warning('Global bounds includes all iterations. Increase iterations or reduce p-value');
@@ -126,7 +126,7 @@ disp(['Found bounds to exclude ' num2str(numout) ' = ' num2str(numout/iterations
 
 alpha_diff = alpha_level - (numout/iterations);
 if abs(alpha_diff)>0.01
-warning(['Difference between alpha-level and p-value is large: ' num2str(alpha_diff) '. Results likely inaccurate. Increase iterations or de-noise data.']);
+    warning(['Difference between alpha-level and p-value is large: ' num2str(alpha_diff) '. Results likely inaccurate. Increase iterations or de-noise data.']);
 end
 
 %Create symmetrical bounds
@@ -143,30 +143,34 @@ if ploton
     xvals = 1:length(sigbins_all);
     figure('units','normalized','position',[0 0 1 1],'color','w');
     
-    if iterations<1000
+    %Plot raw data if not too big
+    if iterations<500
         plot(xvals, null_mat','color',[.8 .8 .8]);
     end
     
+    %Plot bounds and stat
     hold on;
     h_bounds = plot(xvals,hi,'r','linewidth',2);
     h_stat = plot(xvals, abs(true_stat),'k','linewidth',2);
-
+    
     %Plot significant regions
     yl=ylim;
     h_sigregions = [];
+    
     for ii=1:length(cons_all)
         inds = sig_regions{ii};
         h_sigregions(ii) = fill(xvals([inds(1) inds(1) inds(end) inds(end)]),[yl(1) yl(2) yl(2) yl(1)],'g','edgecolor','none');
         uistack(h_sigregions,'bottom');
     end
     
-     if isempty(h_sigregions)
+    %Generate legend
+    if isempty(h_sigregions)
         legend([h_bounds, h_stat],{'Global Bounds','Observed Statistic'});
     else
         legend([h_bounds, h_stat, h_sigregions(1)],{'Global Bounds','Observed Statistic','Significant Regions'});
     end
     
-    axis tight;  
+    axis tight;
 end
 end
 
@@ -200,5 +204,5 @@ for ii = 1:N
     end
 end
 
-gperm(g1, g2);
+gpermtest(g1, g2);
 end

@@ -1,4 +1,4 @@
-function [sigbins, p_adj, p_values] =  FDRtest2(group1, group2, alpha_level, iterations, ploton)
+function [sigbins, p_adj, p_values] =  FDRtest2(varargin)
 %FDRtest2 Computes FDR regions of significance for a 2d matrix
 %
 %   Usage:
@@ -32,25 +32,26 @@ if nargin ==0
 end
 
 %%
+p = inputParser;
+addRequired(p,'group1',@(x)validateattributes(x,{'numeric','2d'},{'nonempty'}));
+addRequired(p,'group2',@(x)validateattributes(x,{'numeric','2d'},{'nonempty'}));
+addOptional(p,'alpha_level',0.1,@(x)validateattributes(x,{'numeric','1d'},{'nonempty','positive','<=',1}));
+addOptional(p,'iterations',false,@(x)validateattributes(x,{'logical','1d'}));
+addOptional(p,'ploton',true,@(x)validateattributes(x,{'logical','1d'}));
+
+parse(p,varargin{:});
+
+input_arguments = struct2cell(p.Results);
+input_flags = fieldnames(p.Results);
+eval(['[', sprintf('%s ', input_flags{:}), '] = deal(input_arguments{:});']);
+
 %Get group sizes
 [R,C,N1] = size(group1);
 [R2,C2,N2] = size(group2);
 
-%Check that they are the same size
+%Check that they are the same size and are valid
 assert(R == R2 && C == C2,'Group dims must be the same');
-
-%Set up default parameters
-if nargin<3 || isempty(alpha_level)
-    alpha_level = 0.1;
-end
-
-if nargin<4 || isempty(iterations)
-    iterations = false;
-end
-
-if nargin <5
-    ploton = true;
-end
+assert(any(isfinite(group1),'all') && any(isfinite(group2),'all'), 'Groups must have valid numeric data')
 
 %Reshape to linear
 g1_redim = reshape(group1,size(group1,1)*size(group1,2),size(group1,3));

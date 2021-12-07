@@ -42,6 +42,8 @@ if nargin <5 || isempty(ploton)
     ploton = true;
 end
 
+assert(any(isfinite(group1),'all') && any(isfinite(group2),'all'), 'Groups must have valid numeric data')
+
 %Remove nan dimensions
 p1 = group1(:,any(~isnan(group1)));
 p2 = group2(:,any(~isnan(group2)));

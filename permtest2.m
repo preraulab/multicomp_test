@@ -1,4 +1,4 @@
-function [sigbins, tstat_obs, thresh, perm_tmax] = permtest2(group1, group2, alpha_level, iterations, ploton)
+function [sigbins, tstat_obs, thresh, perm_tmax] = permtest2(varargin)
 %PERMTEST2 Computes permutation test (max t-stat) and regions of significance
 %
 %   Usage:
@@ -26,51 +26,33 @@ function [sigbins, tstat_obs, thresh, perm_tmax] = permtest2(group1, group2, alp
 
 %Call the examples for no input
 if nargin == 0
-    
-    %Define dataset
-    N1 = 20;
-    N2 = 33;
-    N = N1 + N2;
-    
-    %Set peaks resolution
-    T = 50;
-    
-    group1 = zeros(T,T,N1);
-    group2 = zeros(T,T,N2);
-    
-    %Create functions
-    f1 =@(x)peaks(x)*rand*10 + randn(T)*.5;
-    f2 =@(x)fliplr(peaks(x))*rand*10 + randn(T)*.5;
-    
-    %Generate data
-    for ii = 1:N
-        if ii<=N1
-            group1(:,:,ii) = f1(T);
-        else
-            group2(:,:,ii-N1) = f2(T);
-        end
-    end
+    demo();
+    return;
 end
 
 %%
+
+%Parse inputs to extract just the xy axis locations
+p = inputParser;
+addRequired(p,'group1',@(x)validateattributes(x,{'numeric','2d'},{'nonempty'}));
+addRequired(p,'group2',@(x)validateattributes(x,{'numeric','2d'},{'nonempty'}));
+addOptional(p,'alpha_level',0.05,@(x)validateattributes(x,{'numeric','1d'},{'positive','<=',1}));
+addOptional(p,'iterations',1000,@(x)validateattributes(x,{'numeric','1d'},{'positive'}));
+addOptional(p,'ploton',true,@(x)validateattributes(x,{'logical','1d'}));
+
+parse(p,varargin{:});
+
+input_arguments = struct2cell(p.Results);
+input_flags = fieldnames(p.Results);
+eval(['[', sprintf('%s ', input_flags{:}), '] = deal(input_arguments{:});']);
+
 %Get group sizes
 [R,C,N1] = size(group1);
 [R2,C2,N2] = size(group2);
 
-%Check that they are the same size
+%Check that they are the same size and are valid
 assert(R == R2 && C == C2,'Group dims must be the same');
-
-if nargin<3 || isempty(alpha_level)
-    alpha_level = 0.05;
-end
-
-if nargin<4 || isempty(iterations)
-    iterations = 1000;
-end
-
-if nargin < 5
-    ploton = true;
-end
+assert(any(isfinite(group1),'all') && any(isfinite(group2),'all'), 'Groups must have valid numeric data')
 
 %Reshape to linear
 g1_redim = reshape(group1,size(group1,1)*size(group1,2),size(group1,3));
@@ -99,5 +81,32 @@ if ploton
     
 end
 
+
+function demo
+%Define dataset
+N1 = 20;
+N2 = 33;
+N = N1 + N2;
+
+%Set peaks resolution
+T = 50;
+
+group1 = zeros(T,T,N1);
+group2 = zeros(T,T,N2);
+
+%Create functions
+f1 =@(x)peaks(x)*rand*10 + randn(T)*.5;
+f2 =@(x)fliplr(peaks(x))*rand*10 + randn(T)*.5;
+
+%Generate data
+for ii = 1:N
+    if ii<=N1
+        group1(:,:,ii) = f1(T);
+    else
+        group2(:,:,ii-N1) = f2(T);
+    end
+end
+
+permtest2(group1,group2);
 
 

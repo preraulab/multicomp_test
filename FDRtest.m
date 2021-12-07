@@ -69,24 +69,24 @@ if ploton
     yl=ylim;
         
     %Plot regions of significance
-    h_r = [];
+    h_sigregions = [];
     
     for ii = 1:length(cons_all)
         inds = sig_regions{ii};
         if ~isempty(inds)
-            h_r(ii) = fill(xvals([inds(1) inds(1) inds(end) inds(end)]),[yl(1) yl(2) yl(2) yl(1)],'g','edgecolor','none');
-            uistack(h_r,'bottom');
+            h_sigregions(ii) = fill(xvals([inds(1) inds(1) inds(end) inds(end)]),[yl(1) yl(2) yl(2) yl(1)],'g','edgecolor','none');
+            uistack(h_sigregions,'bottom');
         end
     end
     
     %Plot adjusted pvalues and threshold line
-    h_pa = plot(xvals, p_adj,'linewidth',2,'color','b');
-    h_t = hline(alpha_level,'color','k','linestyle','--');
+    h_pasj = plot(xvals, p_adj,'linewidth',2,'color','b');
+    h_threshold = hline(alpha_level,'color','k','linestyle','--');
     
-    if isempty(h_r)
-        legend([h_pa, h_t],{'Adjusted p-values','Threshold'});
+    if isempty(h_sigregions)
+        legend([h_pasj, h_threshold],{'Adjusted p-values','Threshold'});
     else
-        legend([h_pa, h_t, h_r(1)],{'Adjusted p-values','Threshold','Significant Regions'});
+        legend([h_pasj, h_threshold, h_sigregions(1)],{'Adjusted p-values','Threshold','Significant Regions'});
     end
     
     axis tight;

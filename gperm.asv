@@ -94,7 +94,7 @@ out_crit = ceil(alpha_level*iterations);
 
 gbounds=sorted_null(:,end);
 
-h_sigregions = waitbar(0,'Computing bounds...');
+h = waitbar(0,'Computing bounds...');
 
 disp(['Out crit: ' num2str(out_crit) ' out of ' num2str(iterations) ' = ' num2str(out_crit/iterations)]);
 
@@ -110,10 +110,10 @@ if out_crit<iterations && out_crit>0
         %Shrink the bounds
         cutoff_ind = cutoff_ind - 1;
         
-        waitbar(numout/out_crit,h_sigregions);
+        waitbar(numout/out_crit,h);
     end
 
-    close(h_sigregions);
+    close(h);
 elseif out_crit>=iterations
     warning('Global bounds includes all iterations. Increase iterations or reduce p-value');
     gbounds = zeros(size(sorted_null(:,1)));
@@ -148,24 +148,17 @@ if ploton
     end
     
     hold on;
-    h_bounds = plot(xvals,hi,'r','linewidth',2);
-    h_stat = plot(xvals, abs(true_stat),'k','linewidth',2);
+    hb = plot(xvals,hi,'r','linewidth',2);
+    hs = plot(xvals, abs(true_stat),'k','linewidth',2);
 
     %Plot significant regions
     yl=ylim;
-    h_sigregions = [];
+    h=[];
     for ii=1:length(cons_all)
         inds = sig_regions{ii};
-        h_sigregions(ii) = fill(xvals([inds(1) inds(1) inds(end) inds(end)]),[yl(1) yl(2) yl(2) yl(1)],'g','edgecolor','none');
-        uistack(h_sigregions,'bottom');
+        h(ii) = fill(xvals([inds(1) inds(1) inds(end) inds(end)]),[yl(1) yl(2) yl(2) yl(1)],'g','edgecolor','none');
+        uistack(h,'bottom');
     end
-    
-     if isempty(h_sigregions)
-        legend([h_bounds, h_stat],{'Global Bounds','Observed Statistic'});
-    else
-        legend([h_bounds, h_stat, h_sigregions(1)],{'Global Bounds','Observed Statistic','Significant Regions'});
-    end
-    
     axis tight;  
 end
 end

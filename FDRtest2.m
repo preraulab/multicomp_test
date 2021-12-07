@@ -78,8 +78,8 @@ if ploton
     
     %Plot significant regions as a contour
     if(any(sigbins(:)))
-        [~, hc] = contour(sigbins,[1 1],'color','k','linewidth',1.5);
-        legend(hc,'Regions of Significance');
+        [~, h_sigregions] = contour(sigbins,[1 1],'color','k','linewidth',1.5);
+        legend(h_sigregions,'Regions of Significance');
     end
    
     axis tight;

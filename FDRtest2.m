@@ -27,8 +27,8 @@ function [sigbins, p_adj, p_values] =  FDRtest2(group1, group2, alpha_level, ite
 
 %Call the examples for no input
 if nargin ==0
-   demo;
-   return;
+    demo;
+    return;
 end
 
 %%
@@ -73,39 +73,43 @@ if ploton
     caxis(max(abs(cx))*[-1 1]);
     colormap(redbluemap);
     colorbar
+    
     if(any(sigbins(:)))
-        contour(sigbins,[1 1],'color','k','linewidth',1.5)
+        [~, hc] = contour(sigbins,[1 1],'color','k','linewidth',1.5);
+        legend(hc,'Regions of Significance');
     end
+    
+    
     
     axis tight;
 end
 
 function demo
- 
-    %Define dataset
-    N1 = 20;
-    N2 = 33;
-    N = N1 + N2;
-    
-    %Set peaks resolution
-    T = 50;
-    
-    group1 = zeros(T,T,N1);
-    group2 = zeros(T,T,N2);
-    
-    %Create functions
-    f1 =@(x)peaks(x)*rand*10 + randn(T)*5;
-    f2 =@(x)fliplr(peaks(x))*rand*10 + randn(T)*5;
-    
-    %Generate data
-    for ii = 1:N
-        if ii<=N1
-            group1(:,:,ii) = f1(T);
-        else
-            group2(:,:,ii-N1) = f2(T);
-        end
+
+%Define dataset
+N1 = 20;
+N2 = 33;
+N = N1 + N2;
+
+%Set peaks resolution
+T = 50;
+
+group1 = zeros(T,T,N1);
+group2 = zeros(T,T,N2);
+
+%Create functions
+f1 =@(x)peaks(x)*rand*10 + randn(T)*5;
+f2 =@(x)fliplr(peaks(x))*rand*10 + randn(T)*5;
+
+%Generate data
+for ii = 1:N
+    if ii<=N1
+        group1(:,:,ii) = f1(T);
+    else
+        group2(:,:,ii-N1) = f2(T);
     end
-    
-    
+end
+
+FDRtest2(group1,group2);
 
 

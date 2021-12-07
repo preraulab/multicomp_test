@@ -1,5 +1,5 @@
 function [sigbins_all, p_adj, p_values] = FDRtest(group1, group2, alpha_level, iterations, ploton)
-%FDRTEST Computes FDR regions of significance 
+%FDRTEST Computes FDR regions of significance
 %
 %   [sigbins, p_adj, p_values] =  FDRtest(group1, group2, alpha_level, iterations, ploton)
 %
@@ -64,16 +64,28 @@ if ploton
     figure('units','normalized','position',[0 0 1 1],'color','w');
     hold all;
     xvals = 1:length(p_adj);
-    plot(xvals, p_adj);
-    hline(alpha_level);
     
     %Plot significant regions
     yl=ylim;
-    for i=1:length(cons_all)
-        inds=sig_regions{i};
-        h=fill(xvals([inds(1) inds(1) inds(end) inds(end)]),[yl(1) yl(2) yl(2) yl(1)],'g','edgecolor','none');
-        uistack(h,'bottom');
+    h_r = [];
+    
+    for ii = 1:length(cons_all)
+        inds = sig_regions{ii};
+        if ~isempty(inds)
+            h_r(ii) = fill(xvals([inds(1) inds(1) inds(end) inds(end)]),[yl(1) yl(2) yl(2) yl(1)],'g','edgecolor','none');
+            uistack(h_r,'bottom');
+        end
     end
+    
+    h_pa = plot(xvals, p_adj,'linewidth',2,'color','b');
+    h_t = hline(alpha_level,'color','k','linestyle','--');
+    
+    if isempty(h_r)
+        legend([h_pa, h_t],{'Adjusted p-values','Threshold'});
+    else
+        legend([h_pa, h_t, h_r(1)],{'Adjusted p-values','Threshold','Significant Regions'});
+    end
+    
     axis tight;
 end
 end

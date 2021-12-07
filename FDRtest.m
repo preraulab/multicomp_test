@@ -90,6 +90,9 @@ if ploton
         legend([h_pasj, h_threshold, h_sigregions(1)],{'Adjusted p-values','Threshold','Significant Regions'});
     end
     
+    xlabel('Bin Number');
+    ylabel('Adjusted p-value');
+    
     axis tight;
 end
 end

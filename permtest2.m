@@ -2,7 +2,7 @@ function [sigbins, tstat_obs, thresh, perm_tmax] = permtest2(group1, group2, alp
 %PERMTEST2 Computes permutation test (max t-stat) and regions of significance
 %
 %   Usage:
-%   permtest() RUNS DEMO
+%   permtest2() RUNS DEMO
 %   [sigbins_all, tstat_obs, thresh, perm_tmax] = permtest2(group1, group2, alpha_level, iterations, ploton)
 %
 %   Input:
@@ -17,7 +17,7 @@ function [sigbins, tstat_obs, thresh, perm_tmax] = permtest2(group1, group2, alp
 %   perm_tmax: Vector of permuted max(t-stats)
 %
 %   Example:
-%       permtest(); %RUNS DEMO
+%       permtest2(); %RUNS DEMO
 %
 %   Copyright 2021 Michael J. Prerau, Ph.D.
 %
@@ -91,7 +91,12 @@ if ploton
     caxis(max(abs(cx))*[-1 1]);
     colormap(redbluemap);
     colorbar
-    contour(sigbins,1,'color','k', 'LineWidth', 1.5);
+    
+    if any(sigbins,'all')
+        [~,h_sigregions] = contour(sigbins,1,'color','k', 'LineWidth', 1.5);
+        legend(h_sigregions,'Significant Regions');
+    end
+    
 end
 
 

@@ -38,7 +38,7 @@ if nargin<5 || isempty(iterations)
     iterations = 1000;
 end
 
-if nargin <5 || isempty(ploton)
+if nargin <6 || isempty(ploton)
     ploton = true;
 end
 
@@ -83,42 +83,33 @@ sigbins_all= abs(tstat_obs)>thresh;
 
 %Plot the results
 if ploton
-    figure('units','normalized','position',[0 0 1 1],'color','w');
-    
-    subplot(211)
+    figure
     histogram(perm_tmax)
-    h_thresh = vline(thresh,'color','k','linestyle','--');
+    h_thresh = vline(thresh);
     legend(h_thresh,'Threshold');
-    xlabel('t-stat');
-    ylabel('Count');
     
     xvals = 1:length(sigbins_all);
     
-    subplot(212)
+    figure('units','normalized','position',[0 0 1 1],'color','w');
     hold on;
     
-    %Plot significant regions
-    yl=[min(tstat_obs) max(tstat_obs)];
-    h_sigregions = [];
-    
+        %Plot significant regions
+    yl=[min(tstat_;
     for ii=1:length(cons_all)
         inds=sig_regions{ii};
-        h_sigregions(ii) = fill(xvals([inds(1) inds(1) inds(end) inds(end)]),[yl(1) yl(2) yl(2) yl(1)],'g','edgecolor','none');
+        h=fill(xvals([inds(1) inds(1) inds(end) inds(end)]),[yl(1) yl(2) yl(2) yl(1)],'g','edgecolor','none');
+        uistack(h,'bottom');
     end
     
-    h_stat = plot(xvals, tstat_obs,'b','linewidth',2);
-    h_threshold = hline(thresh,'color','k','linestyle','--');
-    xlabel('Bin Number');
-    ylabel('Stat Value');
+     plot(xvals, tstat_obs,'k','linewidth',2);
+    hline(thresh);
+    axis tight;  
     
-    axis tight;
+ 
     
-    %Generate legend
-    if isempty(h_sigregions)
-        legend([h_threshold, h_stat],{'Threshold','Observed Statistic'});
-    else
-        legend([h_threshold, h_stat, h_sigregions(1)],{'Threshold','Observed Statistic','Significant Regions'});
-    end
+   
+     
+   
     
 end
 end

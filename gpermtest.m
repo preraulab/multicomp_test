@@ -170,6 +170,9 @@ if ploton
         legend([h_bounds, h_stat, h_sigregions(1)],{'Global Bounds','Observed Statistic','Significant Regions'});
     end
     
+    xlabel('Bin Number');
+    ylabel('Stat Value');
+    
     axis tight;
 end
 end

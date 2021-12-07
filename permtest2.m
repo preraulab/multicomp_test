@@ -1,4 +1,4 @@
-function [sigbins_all, tstat_obs, thresh, perm_tmax] = permtest2(group1, group2, alpha_level, iterations, ploton)
+function [sigbins, tstat_obs, thresh, perm_tmax] = permtest2(group1, group2, alpha_level, iterations, ploton)
 %PERMTEST2 Computes permutation test (max t-stat) and regions of significance
 %
 %   Usage:
@@ -64,15 +64,11 @@ if nargin<3 || isempty(alpha_level)
     alpha_level = 0.05;
 end
 
-if nargin<4 || isempty(statfcn)
-    statfcn = @(x)nanmean(x,2);
-end
-
-if nargin<5 || isempty(iterations)
+if nargin<4 || isempty(iterations)
     iterations = 1000;
 end
 
-if nargin <6
+if nargin < 5
     ploton = true;
 end
 

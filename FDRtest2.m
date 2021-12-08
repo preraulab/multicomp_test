@@ -3,11 +3,11 @@ function [sigbins, p_adj, p_values] =  FDRtest2(varargin)
 %
 %   Usage:
 %   FDRtest2() RUNS DEMO
-%   [sigbins, p_adj, p_values] =  FDRtest2(group1, group2, alpha_level, iterations, ploton)
+%   [sigbins, p_adj, p_values] =  FDRtest2(group1, group2, FDR, iterations, ploton)
 %
 %   Input:
 %   group1, group2: in form <dimensions> x <trials> -- required
-%   alpha_level:  level for FDR acceptance (Default: 0.1)
+%   FDR:  level for FDR acceptance (Default: 0.1)
 %   iterations: if numeric, perform a permulation t-test with the given
 %   number of iterations (default: false = single t-test)
 %   ploton: (default: true)
@@ -22,7 +22,7 @@ function [sigbins, p_adj, p_values] =  FDRtest2(varargin)
 %
 %   Copyright 2021 Michael J. Prerau, Ph.D.
 %
-%   Last modified 11/03/2021
+%   Last modified 12/08/2021
 %********************************************************************
 
 %Call the examples for no input
@@ -35,9 +35,12 @@ end
 p = inputParser;
 addRequired(p,'group1',@(x)validateattributes(x,{'numeric','2d'},{'nonempty'}));
 addRequired(p,'group2',@(x)validateattributes(x,{'numeric','2d'},{'nonempty'}));
-addOptional(p,'alpha_level',0.1,@(x)validateattributes(x,{'numeric','1d'},{'nonempty','positive','<=',1}));
-addOptional(p,'iterations',false,@(x)validateattributes(x,{'logical','1d'}));
-addOptional(p,'ploton',true,@(x)validateattributes(x,{'logical','1d'}));
+addOptional(p,'FDR',0.1,@(x)validateattributes(x,{'numeric','1d'},{'nonempty','positive','<=',1}));
+addOptional(p,'use_mattest',false,@islogical);
+addOptional(p,'mattest_options',{'permute',false},@iscell);
+addOptional(p,'mafdr_options',{'BHFDR',true},@iscell);
+addOptional(p,'paired',true,@islogical);
+addOptional(p,'ploton',true,@islogical);
 
 parse(p,varargin{:});
 
@@ -57,8 +60,13 @@ assert(any(isfinite(group1),'all') && any(isfinite(group2),'all'), 'Groups must 
 g1_redim = reshape(group1,size(group1,1)*size(group1,2),size(group1,3));
 g2_redim = reshape(group2,size(group2,1)*size(group2,2),size(group2,3));
 
+%Set inf values to nan
+g1_redim(isinf(g1_redim)) = nan;
+g2_redim(isinf(g2_redim)) = nan;
+
 %Compute linear perm test with global bounds
-[linear_sigbins, linear_p_adj, linear_p_values] = FDRtest(g1_redim, g2_redim,  alpha_level,  iterations, false);
+[linear_sigbins, linear_p_adj, linear_p_values] = FDRtest(g1_redim, g2_redim,  FDR,...
+    use_mattest, mattest_options, mafdr_options, paired, false);
 
 %Reshape output
 sigbins = reshape(linear_sigbins, R,C);
@@ -90,7 +98,7 @@ function demo
 
 %Define dataset
 N1 = 20;
-N2 = 33;
+N2 = 20;
 N = N1 + N2;
 
 %Set peaks resolution
@@ -114,6 +122,6 @@ end
 
 group1(:,30,1) = inf;
 
-FDRtest2(group1,group2);
+FDRtest2(group1,group2, 'paired', true);
 
 

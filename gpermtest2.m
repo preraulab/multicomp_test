@@ -31,7 +31,7 @@ if nargin == 0
 end
 
 %%
-%Parse inputs to extract just the xy axis locations
+%Parse inputs 
 p = inputParser;
 addRequired(p,'group1',@(x)validateattributes(x,{'numeric','2d'},{'nonempty'}));
 addRequired(p,'group2',@(x)validateattributes(x,{'numeric','2d'},{'nonempty'}));

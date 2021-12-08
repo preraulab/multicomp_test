@@ -1,13 +1,18 @@
-function [sigbins_all, p_adj, p_values] = FDRtest(group1, group2, alpha_level, iterations, ploton)
+function [sigbins_all, p_adj, p_values] = FDRtest(varargin)
 %FDRTEST Computes FDR regions of significance
 %
-%   [sigbins, p_adj, p_values] =  FDRtest(group1, group2, alpha_level, iterations, ploton)
+%   [sigbins, p_adj, p_values] =  FDRtest(group1, group2, FDR)
 %
 %   Input:
 %   group1, group2: in form <dimensions> x <trials> -- required
-%   alpha_level:  level for FDR acceptance (Default: 0.1)
-%   iterations: if numeric, perform a permulation t-test with the given
-%   number of iterations (default: false = single t-test)
+%   FDR:  level for FDR acceptance (Default: 0.1)
+%   use_mattest: logical flag for whether to use mattest (default: false)
+%   mattest_options: Name-Value argument cell array for mattest function
+%   calls (default: {'permute',false}) 
+%   mafdr_options: Name-Value argument cell array for mafdr function calls
+%   (default: {'BHFDR',true})
+%   paired: logical flag for doing paired sample ttest or two sample ttest
+%   as main hypothesis testing statistics (default: true)
 %   ploton: (default: true)
 %
 %   Output:
@@ -20,7 +25,7 @@ function [sigbins_all, p_adj, p_values] = FDRtest(group1, group2, alpha_level, i
 %
 %   Copyright 2021 Michael J. Prerau, Ph.D.
 %
-%   Last modified 11/03/2021
+%   Last modified 12/08/2021
 %********************************************************************
 
 %Call the examples for no input
@@ -29,39 +34,50 @@ if nargin==0
     return;
 end
 
-if nargin<3 || isempty(alpha_level)
-    alpha_level = 0.1;
-end
+p = inputParser;
+addRequired(p,'group1',@(x)validateattributes(x,{'numeric','2d'},{'nonempty'}));
+addRequired(p,'group2',@(x)validateattributes(x,{'numeric','2d'},{'nonempty'}));
+addOptional(p,'FDR',0.1,@(x)validateattributes(x,{'numeric','1d'},{'nonempty','positive','<=',1}));
+addOptional(p,'use_mattest',false,@islogical);
+addOptional(p,'mattest_options',{'permute',false},@iscell);
+addOptional(p,'mafdr_options',{'BHFDR',true},@iscell);
+addOptional(p,'paired',true,@islogical);
+addOptional(p,'ploton',true,@islogical);
 
-if nargin<4 || isempty(iterations)
-    iterations = false;
-end
+parse(p,varargin{:});
 
-if nargin <5 || isempty(ploton)
-    ploton = true;
-end
+input_arguments = struct2cell(p.Results);
+input_flags = fieldnames(p.Results);
+eval(['[', sprintf('%s ', input_flags{:}), '] = deal(input_arguments{:});']);
 
-%Remove nan dimensions
-p1 = group1(:,any(~isnan(group1)));
-p2 = group2(:,any(~isnan(group2)));
 
-if iterations
-    p_values = mattest(p1,p2,'permute',iterations);
+%Change infs to nans
+group1(isinf(group1)) = nan;
+group2(isinf(group2)) = nan;
+
+
+if use_mattest
+    assert(~paired, 'Cannot run paired ttest using mattest.')
+    p_values = mattest(p1,p2,mattest_options{:});
 else
-    [~,p_values]=ttest2(p1',p2');
+    if paired 
+        [~,p_values]=ttest(group1',group2');
+    else
+        [~,p_values]=ttest2(group1',group2');
+    end
 end
 
-p_adj = mafdr(p_values,'BHFDR',true);
+p_adj = mafdr(p_values,mafdr_options{:});
 
 %Find the significant bins
-sigbins_all = p_adj<alpha_level;
+sigbins_all = p_adj<FDR;
 
 
 %Plot the results
 if ploton
     [cons_all,sig_regions]=consecutive(sigbins_all);
     
-    figure('units','normalized','position',[0 0 1 1],'color','w');
+    figure('units','normalized','color','w');
     hold all;
     xvals = 1:length(p_adj);
     
@@ -82,7 +98,7 @@ if ploton
     
     %Plot adjusted pvalues and threshold line
     h_pasj = plot(xvals, p_adj,'linewidth',2,'color','b');
-    h_threshold = hline(alpha_level,'color','k','linestyle','--');
+    h_threshold = hline(FDR,'color','k','linestyle','--');
     
     if isempty(h_sigregions)
         legend([h_pasj, h_threshold],{'Adjusted p-values','Threshold'});
@@ -102,7 +118,7 @@ function demo
 
 %Define dataset
 N1 = 200;
-N2 = 303;
+N2 = 200;
 N = N1+N2;
 
 %Set time resolution
@@ -127,5 +143,5 @@ for ii = 1:N
     end
 end
 
-FDRtest(g1, g2);
+FDRtest(g1, g2, 'paired', true);
 end

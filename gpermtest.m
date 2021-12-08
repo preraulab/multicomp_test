@@ -31,21 +31,20 @@ if nargin==0
 end
 
 
-if nargin<3 || isempty(alpha_level)
-    alpha_level = 0.05;
-end
+%Parse inputs 
+p = inputParser;
+addRequired(p,'group1',@(x)validateattributes(x,{'numeric','2d'},{'nonempty'}));
+addRequired(p,'group2',@(x)validateattributes(x,{'numeric','2d'},{'nonempty'}));
+addOptional(p,'alpha_level',0.05,@(x)validateattributes(x,{'numeric','1d'},{'nonempty','positive','<=',1}));
+addOptional(p,'statfcn', @(x)nanmean(x,2),@(x)isa(x,'function_handle'));
+addOptional(p,'iterations',10000,@(x)validateattributes(x,{'numeric','1d'},{'nonempty','positive'}));
+addOptional(p,'ploton',true,@(x)validateattributes(x,{'logical','1d'},{'nonempty'}));
 
-if nargin<4 || isempty(statfcn)
-    statfcn = @(x)nanmean(x,2);
-end
+parse(p,varargin{:});
 
-if nargin<5 || isempty(iterations)
-    iterations = 100000;
-end
-
-if nargin <6 || isempty(ploton)
-    ploton = true;
-end
+input_arguments = struct2cell(p.Results);
+input_flags = fieldnames(p.Results);
+eval(['[', sprintf('%s ', input_flags{:}), '] = deal(input_arguments{:});']);
 
 %Remove nan dimensions
 p1 = group1(:,any(~isnan(group1)));

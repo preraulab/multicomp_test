@@ -1,14 +1,18 @@
 function [sigbins_all, p_adj, p_values] = FDRtest(varargin)
 %FDRTEST Computes FDR regions of significance
 %
-%   [sigbins, p_adj, p_values] =  FDRtest(group1, group2, FDR, iterations, ploton)
+%   [sigbins, p_adj, p_values] =  FDRtest(group1, group2, FDR)
 %
 %   Input:
 %   group1, group2: in form <dimensions> x <trials> -- required
 %   FDR:  level for FDR acceptance (Default: 0.1)
-%   use_mattest: 
-%   mattest: if numeric, perform a permulation t-test with the given
-%   number of iterations (default: false = single t-test)
+%   use_mattest: logical flag for whether to use mattest (default: false)
+%   mattest_options: Name-Value argument cell array for mattest function
+%   calls (default: {'permute',false}) 
+%   mafdr_options: Name-Value argument cell array for mafdr function calls
+%   (default: {'BHFDR',true})
+%   paired: logical flag for doing paired sample ttest or two sample ttest
+%   as main hypothesis testing statistics (default: true)
 %   ploton: (default: true)
 %
 %   Output:

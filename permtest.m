@@ -1,4 +1,4 @@
-function [sigbins_all, tstat_obs, thresh, perm_tmax] = permtest(group1, group2, alpha_level, iterations, ploton)
+function [sigbins_all, tstat_obs, thresh, perm_tmax] = permtest(varargin)
 %PERMTEST Computes permutation test (max t-stat) and regions of significance
 %
 %   Usage:
@@ -30,17 +30,19 @@ if nargin==0
     return;
 end
 
-if nargin<3 || isempty(alpha_level)
-    alpha_level = 0.05;
-end
+%Parse inputs to extract just the xy axis locations
+p = inputParser;
+addRequired(p,'group1',@(x)validateattributes(x,{'numeric','2d'},{'nonempty'}));
+addRequired(p,'group2',@(x)validateattributes(x,{'numeric','2d'},{'nonempty'}));
+addOptional(p,'alpha_level',0.05,@(x)validateattributes(x,{'numeric','1d'},{'positive','<=',1}));
+addOptional(p,'iterations',1000,@(x)validateattributes(x,{'numeric','1d'},{'positive'}));
+addOptional(p,'ploton',true,@(x)validateattributes(x,{'logical','1d'}));
 
-if nargin<5 || isempty(iterations)
-    iterations = 1000;
-end
+parse(p,varargin{:});
 
-if nargin <5 || isempty(ploton)
-    ploton = true;
-end
+input_arguments = struct2cell(p.Results);
+input_flags = fieldnames(p.Results);
+eval(['[', sprintf('%s ', input_flags{:}), '] = deal(input_arguments{:});']);
 
 assert(any(isfinite(group1),'all') && any(isfinite(group2),'all'), 'Groups must have valid numeric data')
 

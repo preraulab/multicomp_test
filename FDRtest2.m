@@ -112,6 +112,8 @@ for ii = 1:N
     end
 end
 
+group1(:,30,1) = inf;
+
 FDRtest2(group1,group2);
 
 

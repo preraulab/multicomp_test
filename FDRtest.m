@@ -1,4 +1,4 @@
-function [sigbins_all, p_adj, p_values] = FDRtest(group1, group2, alpha_level, iterations, ploton)
+function [sigbins_all, p_adj, p_values] = FDRtest(varargin)
 %FDRTEST Computes FDR regions of significance
 %
 %   [sigbins, p_adj, p_values] =  FDRtest(group1, group2, alpha_level, iterations, ploton)
@@ -29,17 +29,23 @@ if nargin==0
     return;
 end
 
-if nargin<3 || isempty(alpha_level)
-    alpha_level = 0.1;
-end
+p = inputParser;
+addRequired(p,'group1',@(x)validateattributes(x,{'numeric','2d'},{'nonempty'}));
+addRequired(p,'group2',@(x)validateattributes(x,{'numeric','2d'},{'nonempty'}));
+addOptional(p,'alpha_level',0.1,@(x)validateattributes(x,{'numeric','1d'},{'nonempty','positive','<=',1}));
+addOptional(p,'iterations',false,@islogical);
+addOptional(p,'ploton',true,@islogical);
 
-if nargin<4 || isempty(iterations)
-    iterations = false;
-end
+parse(p,varargin{:});
 
-if nargin <5 || isempty(ploton)
-    ploton = true;
-end
+input_arguments = struct2cell(p.Results);
+input_flags = fieldnames(p.Results);
+eval(['[', sprintf('%s ', input_flags{:}), '] = deal(input_arguments{:});']);
+
+
+%Change infs to nans
+group1(isinf(group1)) = nan;
+group2(isinf(group2)) = nan;
 
 %Remove nan dimensions
 p1 = group1(:,any(~isnan(group1)));

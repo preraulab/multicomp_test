@@ -1,18 +1,19 @@
-function [sigbins_all, sig_regions, acceptance_bounds, true_stat] = gpermtest(group1, group2, alpha_level, statfcn, iterations, ploton)
+function [sigbins_all, sig_regions, acceptance_bounds, true_stat] = gpermtest(varargin)
 %GPERMTEST Computes global acceptance bounds and regions of significance
 %for a given statistic for two sets of multidimensional observations
 %
 %   Usage:
 %   gpermtest() RUNS DEMO
-%   [sig_regions, acceptance_bounds] = gpermtest(group1, group2, x_bins, alpha_level, statfcn, iterations, group1_name, group2_name, ploton)
+%   [sigbins_all, sig_regions, acceptance_bounds, true_stat] = gpermtest(group1, group2, alpha_level)
 %
 %   Input:
 %   group1, group2: in form <dimensions> x <trials> -- required
 %   alpha_level:  global acceptance alpha (Default: 0.05)x a
 %   statfcn: handle statistic to compute across trials (Default: @(x)mean(x,2) MUST COMPUTE ACROSS DIM 2)
+%   iterations: numeric, number of iterations to generate null distribution
 %   ploton: 0 no plot, 1 plot traces (default), 2 plot mean and 2*standard errors     % Previously boolean for plot output (Default: true)
 %
-%   Output:
+%   Output: <- need to docstring outpus
 %   sig_regions: A cell array of contiguous significant dimensions
 %   acceptance_bounds: the 2 x <dimensions> global acceptance bounds at a level defined by alpha_level
 %
@@ -21,7 +22,7 @@ function [sigbins_all, sig_regions, acceptance_bounds, true_stat] = gpermtest(gr
 %
 %   Copyright 2021 Michael J. Prerau, Ph.D.
 %
-%   Last modified 11/01/2021
+%   Last modified 12/08/2021
 %********************************************************************
 
 %Call the examples for no input
@@ -30,15 +31,14 @@ if nargin==0
     return;
 end
 
-
-%Parse inputs 
+%Parse inputs
 p = inputParser;
 addRequired(p,'group1',@(x)validateattributes(x,{'numeric','2d'},{'nonempty'}));
 addRequired(p,'group2',@(x)validateattributes(x,{'numeric','2d'},{'nonempty'}));
 addOptional(p,'alpha_level',0.05,@(x)validateattributes(x,{'numeric','1d'},{'nonempty','positive','<=',1}));
 addOptional(p,'statfcn', @(x)nanmean(x,2),@(x)isa(x,'function_handle'));
 addOptional(p,'iterations',10000,@(x)validateattributes(x,{'numeric','1d'},{'nonempty','positive'}));
-addOptional(p,'ploton',true,@(x)validateattributes(x,{'logical','1d'},{'nonempty'}));
+addOptional(p,'ploton',true,@islogical);
 
 parse(p,varargin{:});
 
@@ -66,6 +66,7 @@ null_mat=zeros(R,iterations);
 disp(['Computing test with ' num2str(iterations) ' iterations at alpha level ' num2str(alpha_level) '...']);
 
 %Generate null distribution
+statfcn = statfcn; %#ok<ASGSL> % declare the function handle explicitly for parfor 
 disp('Generating null distribution...');
 parfor ii=1:iterations
     %Get a random permutation of the labels
@@ -114,7 +115,7 @@ if out_crit<iterations && out_crit>0
     
     close(h_sigregions);
 elseif out_crit>=iterations
-    warning('Global bounds includes all iterations. Increase iterations or reduce p-value');
+    warning('Global bounds includes all iterations. Increase iterations or decrease p-value');
     gbounds = zeros(size(sorted_null(:,1)));
 elseif out_crit == 0
     warning('Global bounds is below precision for number of iterations. Increase iterations or increase p-value');
@@ -124,7 +125,7 @@ end
 disp(['Found bounds to exclude ' num2str(numout) ' = ' num2str(numout/iterations)]);
 
 alpha_diff = alpha_level - (numout/iterations);
-if abs(alpha_diff)>0.01
+if abs(alpha_diff)>0.01 % <- what is the rationale for this warning? 
     warning(['Difference between alpha-level and p-value is large: ' num2str(alpha_diff) '. Results likely inaccurate. Increase iterations or de-noise data.']);
 end
 
@@ -140,7 +141,7 @@ acceptance_bounds=hi;%[hi,lo];
 %Plot the results
 if ploton
     xvals = 1:length(sigbins_all);
-    figure('units','normalized','position',[0 0 1 1],'color','w');
+    figure('units','normalized','color','w');
     
     %Plot raw data if not too big
     if iterations<500

@@ -1,6 +1,8 @@
 function [sigbins_all, p_adj, p_values] = FDRtest(varargin)
 %FDRTEST Computes FDR regions of significance
 %
+%   Usage:
+%   FDRtest2() RUNS DEMO
 %   [sigbins, p_adj, p_values] =  FDRtest(group1, group2, FDR)
 %
 %   Input:
@@ -21,7 +23,7 @@ function [sigbins_all, p_adj, p_values] = FDRtest(varargin)
 %   p_values: raw p-values
 %
 %   Example:
-%      FDRtest(); %RUNS DEMO
+%       FDRtest2(); %RUNS DEMO
 %
 %   Copyright 2021 Michael J. Prerau, Ph.D.
 %
@@ -50,11 +52,9 @@ input_arguments = struct2cell(p.Results);
 input_flags = fieldnames(p.Results);
 eval(['[', sprintf('%s ', input_flags{:}), '] = deal(input_arguments{:});']);
 
-
 %Change infs to nans
 group1(isinf(group1)) = nan;
 group2(isinf(group2)) = nan;
-
 
 if use_mattest
     assert(~paired, 'Cannot run paired ttest using mattest.')
@@ -72,10 +72,9 @@ p_adj = mafdr(p_values,mafdr_options{:});
 %Find the significant bins
 sigbins_all = p_adj<FDR;
 
-
 %Plot the results
 if ploton
-    [cons_all,sig_regions]=consecutive(sigbins_all);
+    [cons_all,sig_regions]=consecutive(sigbins_all); % this currently does not plot significant single time points (i.e., length(sig_regions{ii})<2)
     
     figure('units','normalized','color','w');
     hold all;

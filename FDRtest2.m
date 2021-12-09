@@ -1,5 +1,5 @@
 function [sigbins, p_adj, p_values] =  FDRtest2(varargin)
-%FDRtest2 Computes FDR regions of significance for a 2d matrix
+%FDRTEST2 Computes FDR regions of significance for a 2d matrix
 %
 %   Usage:
 %   FDRtest2() RUNS DEMO
@@ -23,7 +23,7 @@ function [sigbins, p_adj, p_values] =  FDRtest2(varargin)
 %   p_values: raw p-values
 %
 %   Example:
-%      FDRtest2(); %RUNS DEMO
+%       FDRtest2(); %RUNS DEMO
 %
 %   Copyright 2021 Michael J. Prerau, Ph.D.
 %
@@ -31,12 +31,11 @@ function [sigbins, p_adj, p_values] =  FDRtest2(varargin)
 %********************************************************************
 
 %Call the examples for no input
-if nargin ==0
+if nargin==0
     demo;
     return;
 end
 
-%%
 p = inputParser;
 addRequired(p,'group1',@(x)validateattributes(x,{'numeric','2d'},{'nonempty'}));
 addRequired(p,'group2',@(x)validateattributes(x,{'numeric','2d'},{'nonempty'}));
@@ -65,12 +64,12 @@ assert(any(isfinite(group1),'all') && any(isfinite(group2),'all'), 'Groups must 
 g1_redim = reshape(group1,size(group1,1)*size(group1,2),size(group1,3));
 g2_redim = reshape(group2,size(group2,1)*size(group2,2),size(group2,3));
 
-%Set inf values to nan
+%Set inf values to nan <- since FDRtest handles inf values, do we still need to do this?
 g1_redim(isinf(g1_redim)) = nan;
 g2_redim(isinf(g2_redim)) = nan;
 
-%Compute linear perm test with global bounds
-[linear_sigbins, linear_p_adj, linear_p_values] = FDRtest(g1_redim, g2_redim,  FDR,...
+%Compute linear perm test with global bounds <- is this description accurate?
+[linear_sigbins, linear_p_adj, linear_p_values] = FDRtest(g1_redim, g2_redim, FDR,...
     use_mattest, mattest_options, mafdr_options, paired, false);
 
 %Reshape output
@@ -98,6 +97,8 @@ if ploton
    
     axis tight;
 end
+end
+
 
 function demo
 
@@ -109,6 +110,7 @@ N = N1 + N2;
 %Set peaks resolution
 T = 50;
 
+%Initialize data and null matrices
 group1 = zeros(T,T,N1);
 group2 = zeros(T,T,N2);
 
@@ -125,8 +127,8 @@ for ii = 1:N
     end
 end
 
-group1(:,30,1) = inf;
+% set a column to be inf to test how the function handles inf values 
+group1(:,30,1) = inf; 
 
-FDRtest2(group1,group2, 'paired', true);
-
-
+FDRtest2(group1, group2, 'paired', true);
+end

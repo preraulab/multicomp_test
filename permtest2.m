@@ -21,7 +21,7 @@ function [sigbins, tstat_obs, thresh, perm_tmax] = permtest2(varargin)
 %
 %   Copyright 2021 Michael J. Prerau, Ph.D.
 %
-%   Last modified 11/01/2021
+%   Last modified 12/08/2021
 %********************************************************************
 
 %Call the examples for no input
@@ -30,15 +30,13 @@ if nargin == 0
     return;
 end
 
-%%
-
 %Parse inputs to extract just the xy axis locations
 p = inputParser;
 addRequired(p,'group1',@(x)validateattributes(x,{'numeric','2d'},{'nonempty'}));
 addRequired(p,'group2',@(x)validateattributes(x,{'numeric','2d'},{'nonempty'}));
 addOptional(p,'alpha_level',0.05,@(x)validateattributes(x,{'numeric','1d'},{'positive','<=',1}));
 addOptional(p,'iterations',1000,@(x)validateattributes(x,{'numeric','1d'},{'positive'}));
-addOptional(p,'ploton',true,@(x)validateattributes(x,{'logical','1d'}));
+addOptional(p,'ploton',true,@islogical);
 
 parse(p,varargin{:});
 
@@ -80,9 +78,11 @@ if ploton
     end
     
 end
+end
 
 
 function demo
+
 %Define dataset
 N1 = 20;
 N2 = 33;
@@ -91,6 +91,7 @@ N = N1 + N2;
 %Set peaks resolution
 T = 50;
 
+%Initialize data and null matrices
 group1 = zeros(T,T,N1);
 group2 = zeros(T,T,N2);
 
@@ -108,5 +109,4 @@ for ii = 1:N
 end
 
 permtest2(group1,group2);
-
-
+end

@@ -21,7 +21,7 @@ function [sigbins_all, tstat_obs, thresh, perm_tmax] = permtest(varargin)
 %
 %   Copyright 2021 Michael J. Prerau, Ph.D.
 %
-%   Last modified 11/01/2021
+%   Last modified 12/08/2021
 %********************************************************************
 
 %Call the examples for no input
@@ -36,7 +36,7 @@ addRequired(p,'group1',@(x)validateattributes(x,{'numeric','2d'},{'nonempty'}));
 addRequired(p,'group2',@(x)validateattributes(x,{'numeric','2d'},{'nonempty'}));
 addOptional(p,'alpha_level',0.05,@(x)validateattributes(x,{'numeric','1d'},{'positive','<=',1}));
 addOptional(p,'iterations',1000,@(x)validateattributes(x,{'numeric','1d'},{'positive'}));
-addOptional(p,'ploton',true,@(x)validateattributes(x,{'logical','1d'}));
+addOptional(p,'ploton',true,@islogical);
 
 parse(p,varargin{:});
 
@@ -49,7 +49,6 @@ assert(any(isfinite(group1),'all') && any(isfinite(group2),'all'), 'Groups must 
 %Remove nan dimensions
 p1 = group1(:,any(~isnan(group1)));
 p2 = group2(:,any(~isnan(group2)));
-
 
 %Combine both groups
 all=[p1 p2];
@@ -87,7 +86,7 @@ sigbins_all= abs(tstat_obs)>thresh;
 
 %Plot the results
 if ploton
-    figure('units','normalized','position',[0 0 1 1],'color','w');
+    figure('units','normalized','color','w');
     
     subplot(211)
     histogram(perm_tmax)

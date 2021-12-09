@@ -1,15 +1,16 @@
 function [sigbins, acceptance_bounds, true_stat] = gpermtest2(varargin)
-%gpermtest2 Computes global acceptance bounds and regions of significance
+%GPERMTEST2 Computes global acceptance bounds and regions of significance
 %for a given statistic for two sets of multidimensional observations
 %
 %   Usage:
 %   gpermtest2() RUNS DEMO
-%   [sig_regions, acceptance_bounds] = gpermtest2(group1, group2, xvals, yvals, alpha_level, statfcn, iterations, ploton)
+%   [sigbins, acceptance_bounds, true_stat] = gpermtest2(group1, group2, alpha_level)
 %
 %   Input:
 %   group1, group2: in form <dimensions> x <trials> -- required
 %   alpha_level:  global acceptance alpha (Default: 0.05)
 %   statfcn: handle statistic to compute across trials (Default: @(x)nanmean(x,2) MUST COMPUTE ACROSS DIM 2)
+%   iterations: numeric, number of iterations to generate null distribution
 %   ploton: (default: true)
 %
 %   Output:
@@ -21,24 +22,23 @@ function [sigbins, acceptance_bounds, true_stat] = gpermtest2(varargin)
 %
 %   Copyright 2021 Michael J. Prerau, Ph.D.
 %
-%   Last modified 11/01/2021
+%   Last modified 12/08/2021
 %********************************************************************
 
 %Call the examples for no input
-if nargin == 0
+if nargin==0
     demo;
     return;
 end
 
-%%
-%Parse inputs 
+%Parse inputs
 p = inputParser;
 addRequired(p,'group1',@(x)validateattributes(x,{'numeric','2d'},{'nonempty'}));
 addRequired(p,'group2',@(x)validateattributes(x,{'numeric','2d'},{'nonempty'}));
 addOptional(p,'alpha_level',0.05,@(x)validateattributes(x,{'numeric','1d'},{'nonempty','positive','<=',1}));
 addOptional(p,'statfcn', @(x)nanmean(x,2),@(x)isa(x,'function_handle'));
 addOptional(p,'iterations',10000,@(x)validateattributes(x,{'numeric','1d'},{'nonempty','positive'}));
-addOptional(p,'ploton',true,@(x)validateattributes(x,{'logical','1d'},{'nonempty'}));
+addOptional(p,'ploton',true,@islogical);
 
 parse(p,varargin{:});
 
@@ -64,7 +64,6 @@ g2_redim = reshape(group2,size(group2,1)*size(group2,2),size(group2,3));
 %Reshape output
 sigbins = reshape(linear_sigbins, R,C);
 acceptance_bounds = reshape(linear_bounds, R,C);
-
 true_stat = reshape(linear_true_stat, R,C);
 
 if ploton
@@ -83,6 +82,8 @@ if ploton
         legend(h_sigregions,'Significant Regions');
     end
 end
+end 
+
 
 function demo
 
@@ -94,6 +95,7 @@ N = N1 + N2;
 %Set peaks resolution
 T = 50;
 
+%Initialize data and null matrices
 group1 = zeros(T,T,N1);
 group2 = zeros(T,T,N2);
 
@@ -111,3 +113,4 @@ for ii = 1:N
 end
 
 gpermtest2(group1, group2);
+end

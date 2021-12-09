@@ -11,11 +11,13 @@ function [sigbins, acceptance_bounds, true_stat] = gpermtest2(varargin)
 %   alpha_level:  global acceptance alpha (Default: 0.05)
 %   statfcn: handle statistic to compute across trials (Default: @(x)nanmean(x,2) MUST COMPUTE ACROSS DIM 2)
 %   iterations: numeric, number of iterations to generate null distribution
-%   ploton: (default: true)
+%   ploton: boolean for plot output traces and significance regions (default: true)
 %
 %   Output:
+%   sigbins: A matrix of signifiance bins
 %   sig_regions: A cell array of contiguous significant dimensions
 %   acceptance_bounds: the 2 x <dimensions> global acceptance bounds at a level defined by alpha_level
+%   true_stat: difference in mean activity between the two groups
 %
 %   Example:
 %      gpermtest2(); %RUNS DEMO

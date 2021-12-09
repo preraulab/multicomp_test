@@ -8,6 +8,7 @@ function [sigbins, tstat_obs, thresh, perm_tmax] = permtest2(varargin)
 %   Input:
 %   group1, group2: in form <dimensions> x <trials> -- required
 %   alpha_level: signficance level (Default: 0.05)
+%   iterations:  number of permutations for permutation test (default: 1000)
 %   ploton: (Default: true)
 %
 %   Output:

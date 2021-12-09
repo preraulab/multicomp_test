@@ -15,7 +15,8 @@ function [sigbins_all, p_adj, p_values] = FDRtest(varargin)
 %   (default: {'BHFDR',true})
 %   paired: logical flag for doing paired sample ttest or two sample ttest
 %   as main hypothesis testing statistics (default: true)
-%   ploton: (default: true)
+%   ploton: plot adjusted p-value for each point and mark areas of significance 
+%   (default: true)
 %
 %   Output:
 %   sigbins: A matrix of signifiance bins
@@ -90,7 +91,7 @@ if ploton
         inds = sig_regions{ii};
         
         if ~isempty(inds)
-            h_sigregions(ii) = fill(xvals([inds(1) inds(1) inds(end) inds(end)]),[yl(1) yl(2) yl(2) yl(1)],'g','edgecolor','none');
+            h_sigregions(ii) = fill(xvals([inds(1) inds(1) inds(end) inds(end)]) + [-0.1 -0.1 0.1 0.1], [yl(1) yl(2) yl(2) yl(1)],'g','edgecolor','none'); % adding small amount to x-bounds of significance regions solves issue of not marking single points with region of significance in plot
             uistack(h_sigregions,'bottom');
         end
     end

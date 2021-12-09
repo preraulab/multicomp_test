@@ -11,11 +11,13 @@ function [sigbins_all, sig_regions, acceptance_bounds, true_stat] = gpermtest(va
 %   alpha_level:  global acceptance alpha (Default: 0.05)x a
 %   statfcn: handle statistic to compute across trials (Default: @(x)mean(x,2) MUST COMPUTE ACROSS DIM 2)
 %   iterations: numeric, number of iterations to generate null distribution
-%   ploton: 0 no plot, 1 plot traces (default), 2 plot mean and 2*standard errors     % Previously boolean for plot output (Default: true)
+%   ploton: 0 no plot, 1 plot traces (default), 2 plot mean and 2*standard errors     % Previously boolean for plot output (Default: true)  <- should either implement the 0,1,2 options for ploton or return to previous boolean description here. 
 %
 %   Output: <- need to docstring outpus
+%   sigbins_all: A matrix of signifiance bins
 %   sig_regions: A cell array of contiguous significant dimensions
 %   acceptance_bounds: the 2 x <dimensions> global acceptance bounds at a level defined by alpha_level
+%   true_stat: difference in mean activity between the two groups
 %
 %   Example:
 %      gpermtest(); %RUNS DEMO

@@ -15,7 +15,8 @@ function [sigbins, p_adj, p_values] =  FDRtest2(varargin)
 %   (default: {'BHFDR',true})
 %   paired: logical flag for doing paired sample ttest or two sample ttest
 %   as main hypothesis testing statistics (default: true)
-%   ploton: (default: true)
+%   ploton: plot adjusted p-value for each point and mark areas of significance 
+%   (default: true)
 %
 %   Output:
 %   sigbins: A matrix of signifiance bins
@@ -69,6 +70,7 @@ g1_redim(isinf(g1_redim)) = nan;
 g2_redim(isinf(g2_redim)) = nan;
 
 %Compute linear perm test with global bounds <- is this description accurate?
+%Compute false discovery rate test on linearized data <- more accurate description
 [linear_sigbins, linear_p_adj, linear_p_values] = FDRtest(g1_redim, g2_redim, FDR,...
     use_mattest, mattest_options, mafdr_options, paired, false);
 

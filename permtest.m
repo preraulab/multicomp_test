@@ -8,7 +8,9 @@ function [sigbins_all, tstat_obs, thresh, perm_tmax] = permtest(varargin)
 %   Input:
 %   group1, group2: in form <dimensions> x <trials> -- required
 %   alpha_level: signficance level (Default: 0.05)
-%   ploton: (Default: true)
+%   iterations:  number of permutations for permutation test (default: 1000)
+%   ploton: plots histogram of t-stats and trace of stat value 
+%   with regions of significance marked(Default: true)
 %
 %   Output:
 %   sigbins: A vector of significant bins

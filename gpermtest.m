@@ -1,10 +1,11 @@
-function [sigbins_all, sig_regions, acceptance_bounds, true_stat] = gpermtest(group1, group2, alpha_level, statfcn, iterations, ploton)
+function [sigbins_all, sig_regions, acceptance_bounds, true_stat] = gpermtest(varargin)
 %GPERMTEST Computes global acceptance bounds and regions of significance
 %for a given statistic for two sets of multidimensional observations
 %
 %   Usage:
 %   gpermtest() RUNS DEMO
-%   [sig_regions, acceptance_bounds] = gpermtest(group1, group2, x_bins, alpha_level, statfcn, iterations, group1_name, group2_name, ploton)
+%   [sigbins_all, sig_regions, acceptance_bounds, true_stat] = gpermtest(group1, group2, 'alpha_level', alpha_level, 'statfcn', ...
+%                                                                        statfcn, 'iterations', iterations, 'ploton', ploton);
 %
 %   Input:
 %   group1, group2: in form <dimensions> x <trials> -- required
@@ -66,6 +67,7 @@ null_mat=zeros(R,iterations);
 disp(['Computing test with ' num2str(iterations) ' iterations at alpha level ' num2str(alpha_level) '...']);
 
 %Generate null distribution
+statfcn = statfcn;
 disp('Generating null distribution...');
 parfor ii=1:iterations
     %Get a random permutation of the labels

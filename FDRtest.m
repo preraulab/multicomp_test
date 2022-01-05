@@ -72,7 +72,6 @@ p_adj = mafdr(p_values,mafdr_options{:});
 %Find the significant bins
 sigbins_all = p_adj<FDR;
 
-
 %Plot the results
 if ploton
     [cons_all,sig_regions]=consecutive(sigbins_all);

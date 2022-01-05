@@ -38,7 +38,7 @@ addRequired(p,'group1',@(x)validateattributes(x,{'numeric','2d'},{'nonempty'}));
 addRequired(p,'group2',@(x)validateattributes(x,{'numeric','2d'},{'nonempty'}));
 addOptional(p,'alpha_level',0.05,@(x)validateattributes(x,{'numeric','1d'},{'positive','<=',1}));
 addOptional(p,'iterations',1000,@(x)validateattributes(x,{'numeric','1d'},{'positive'}));
-addOptional(p,'ploton',true,@(x)validateattributes(x,{'logical','1d'}));
+addOptional(p,'ploton',true,@islogical);
 
 parse(p,varargin{:});
 

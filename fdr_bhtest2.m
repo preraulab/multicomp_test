@@ -1,5 +1,5 @@
-function [sigbins, p_adj, p_values] =  FDRtest2(varargin)
-%FDRtest2 Computes FDR regions of significance for a 2d matrix
+function [sigbins, p_adj, p_values] =  fdr_bhtest2(varargin)
+%FDRtest2 Computes FDR regions of significance for a 2d matrix without independence assumption
 %
 %   Usage:
 %   FDRtest2() RUNS DEMO
@@ -11,8 +11,6 @@ function [sigbins, p_adj, p_values] =  FDRtest2(varargin)
 %   use_mattest: logical flag for whether to use mattest (default: false)
 %   mattest_options: Name-Value argument cell array for mattest function
 %   calls (default: {'permute',false}) 
-%   mafdr_options: Name-Value argument cell array for mafdr function calls
-%   (default: {'BHFDR',true})
 %   paired: logical flag for doing paired sample ttest or two sample ttest
 %   as main hypothesis testing statistics (default: true)
 %   ploton: (default: true)
@@ -43,7 +41,6 @@ addRequired(p,'group2',@(x)validateattributes(x,{'numeric','2d'},{'nonempty'}));
 addOptional(p,'FDR',0.1,@(x)validateattributes(x,{'numeric','1d'},{'nonempty','positive','<=',1}));
 addOptional(p,'use_mattest',false,@islogical);
 addOptional(p,'mattest_options',{'permute',false},@iscell);
-addOptional(p,'mafdr_options',{'BHFDR',true},@iscell);
 addOptional(p,'paired',true,@islogical);
 addOptional(p,'ploton',true,@islogical);
 
@@ -70,8 +67,8 @@ g1_redim(isinf(g1_redim)) = nan;
 g2_redim(isinf(g2_redim)) = nan;
 
 %Compute linear perm test with global bounds
-[linear_sigbins, linear_p_adj, linear_p_values] = FDRtest(g1_redim, g2_redim,  FDR,...
-    use_mattest, mattest_options, mafdr_options, paired, false);
+[linear_sigbins, linear_p_adj, linear_p_values] = fdr_bhtest(g1_redim, g2_redim,  FDR,...
+    use_mattest, mattest_options, paired, false);
 
 %Reshape output
 sigbins = reshape(linear_sigbins, R,C);

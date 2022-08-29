@@ -73,7 +73,7 @@ sigbins_all = p_adj<FDR;
 if ploton
     [cons_all,sig_regions]=consecutive(sigbins_all);
     
-    figure('units','normalized','color','w');
+%     figure('units','normalized','color','w');
     hold all;
     xvals = 1:length(p_adj);
     

@@ -146,6 +146,7 @@ end
 inds = isfinite(pvals);
 if any(~inds)
     warning('Contains Nan/Inf values. Removing from invalid pvals from the list.')
+    pvals_all = pvals;
     pvals = pvals(inds);
 end
 
@@ -202,6 +203,8 @@ if nargout>3
         end
     end
     adj_p=reshape(adj_p(unsort_ids),s);
+    pvals_all(inds) = adj_p;
+    adj_p = pvals_all;
 end
 
 rej=p_sorted<=thresh;

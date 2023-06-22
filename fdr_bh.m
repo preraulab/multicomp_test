@@ -189,35 +189,35 @@ end
 
 if nargout>3
     %compute adjusted p-values; This can be a bit computationally intensive
-    adj_p=zeros(1,m)*NaN;
+    adj_p_samp=zeros(1,m)*NaN;
     [wtd_p_sorted, wtd_p_sindex] = sort( wtd_p );
     nextfill = 1;
     for k = 1 : m
         if wtd_p_sindex(k)>=nextfill
-            adj_p(nextfill:wtd_p_sindex(k)) = wtd_p_sorted(k);
+            adj_p_samp(nextfill:wtd_p_sindex(k)) = wtd_p_sorted(k);
             nextfill = wtd_p_sindex(k)+1;
             if nextfill>m
                 break;
             end
         end
     end
-    adj_p=reshape(adj_p(unsort_ids),s);
+    adj_p_samp=reshape(adj_p_samp(unsort_ids),s);
 end
 
 rej=p_sorted<=thresh;
 max_id=find(rej,1,'last'); %find greatest significant pvalue
 if isempty(max_id)
-    crit_p=0;
-    h=pvals*0;
-    adj_ci_cvrg=NaN;
+    crit_p_samp=0;
+    h_samp=pvals*0;
+    adj_ci_cvrg_samp=NaN;
 else
-    crit_p=p_sorted(max_id);
-    h=pvals<=crit_p;
-    adj_ci_cvrg=1-thresh(max_id);
+    crit_p_samp=p_sorted(max_id);
+    h_samp=pvals<=crit_p_samp;
+    adj_ci_cvrg_samp=1-thresh(max_id);
 end
 
 if strcmpi(report,'yes')
-    n_sig=sum(p_sorted<=crit_p);
+    n_sig=sum(p_sorted<=crit_p_samp);
     if n_sig==1
         fprintf('Out of %d tests, %d is significant using a false discovery rate of %f.\n',m,n_sig,q);
     else
@@ -230,6 +230,15 @@ if strcmpi(report,'yes')
     end
 end
 
+h = nan(1,length(inds));
+crit_p = nan(1,length(inds));
+adj_ci_cvrg = nan(1,length(inds));
+adj_p = nan(1,length(inds));
+
+h(inds) = h_samp;
+crit_p(inds) = crit_p_samp;
+adj_ci_cvrg(inds) = adj_ci_cvrg_samp;
+adj_p(inds) = adj_p_samp;
 
 
 

@@ -1,53 +1,96 @@
 function [sigbins_all, p_adj, p_values] = fdr_bhtest_gen(varargin)
-%fdr_bhtest_nonparam Computes FDR regions of significance without independence assumption
+% Perform statistical analysis on linear data using the Benjamini-Hochberg FDR test 
+% assuming dependence between samples
 %
-%   [sigbins, p_adj, p_values] =  fdr_bhtest_nonparam(group1, group2, FDR)
+% Usage:
+%   fdr_bhtest_gen(group1, group2, <options>)
 %
-%   Input:
-%   group1, group2: in form <dimensions> x <trials> -- required
-%   FDR:  level for FDR acceptance (Default: 0.1)
-%   paired: logical flag for doing paired sample ranksign or ranksum as main hypothesis
-%       testing statistics (default: false)
-%   nonparam: logical flag for doing nonparam test (default: true)
-%   ploton: (default: true)
-%   demo_on: logical flag for running demo (default:false)
-%   
+% Input:
+%   - group1: Numeric 1D vector representing the first group of data.
+%   - group2: Numeric 1D vector representing the second group of data.
+%   - FDR: (Optional) False Discovery Rate (FDR) threshold for multiple testing correction. Default is 0.1.
+%   - paired: (Optional) Boolean indicating whether the data in group1 and group2 are paired. Default is false.
+%   - nonparam: (Optional) Boolean indicating whether to use nonparametric test. 
+%               For nonparametric tests, a 
+%               Default is true.
+%   - ploton: (Optional) Boolean indicating whether to plot the results. Default is true.
 %
-%   Output:
-%   sigbins: A matrix of signifiance bins
-%   p_adj: Adjusted p-values
-%   p_values: raw p-values
+% Output:
+%   - sigbins: Vector indicating significant regions between group1 and group2.
+%   - p_adj: Vector of adjusted p-values after multiple testing correction.
+%   - p_values: Vector of raw p-values.
 %
-%   Example:
-%      FDRtest(); %RUNS DEMO
+% Example:
+%   Run fdr_bhtest_gen() for demo data
+%     %Define dataset
+%     N1 = 200;
+%     N2 = 200;
+%     N = N1+N2;
+%     
+%     %Set time resolution
+%     T = 100;
+%     
+%     %Initialize data and null matrices
+%     g1 = zeros(T,N1);
+%     g2 = zeros(T,N2);
+%     
+%     %Create functions
+%     f1 =@(x)normpdf(x)*(rand*5+3);
+%     f2 =@(x)normpdf(x)*(rand*5+2);
+%     
+%     x=linspace(-5,5,T)';
+%     
+%     %Generate data
+%     for ii = 1:N
+%         if ii<=N1
+%             data1 = smooth(f1(x)+randn(size(x))*.25)+1;
+%             data1(end-10:end) = nan;
+%             g1(:,ii) = data1;
+%         else
+%             data2 = smooth(f2(x)+randn(size(x))*.25)+1;
+%             data2(end-3:end) = nan;
+%             g2(:,ii-N1) = data2;
+%         end
+%     end
+% 
+%     %Run nonparametric test
+%     fdr_bhtest2_gen(group1,group2,'FDR',.1,'paired', false,'nonparam',false);
+%     suptitle('Nonparametric Test')
 %
-%   Copyright 2021 Michael J. Prerau, Ph.D.
+%     %Run parametric test
+%     fdr_bhtest2_gen(group1,group2,'FDR',.1,'paired', false,'nonparam',true);
+%     suptitle('Nonparametric Test')
 %
-%   Last modified 12/08/2021
-%********************************************************************
+% See also:
+%   fdr_bhtest2_gen
+%
+%   Copyright 2023 Michael J. Prerau Laboratory. - http://www.sleepEEG.org
+
+% DEMO
+if nargin == 0
+    FDR = .1;
+    paired = false;
+    demo_func(FDR,paired,true);
+    suptitle('Nonparametric Test')
+
+    demo_func(FDR,paired,false);
+    suptitle('Parametric Test')
+    return;
+end
 
 p = inputParser;
-addOptional(p,'group1',[],@(x)validateattributes(x,{'numeric','2d'},{'nonempty'}));
-addOptional(p,'group2',[],@(x)validateattributes(x,{'numeric','2d'},{'nonempty'}));
+addRequired(p,'group1',@(x)validateattributes(x,{'numeric','2d'},{'nonempty'}));
+addRequired(p,'group2',@(x)validateattributes(x,{'numeric','2d'},{'nonempty'}));
 addOptional(p,'FDR',0.1,@(x)validateattributes(x,{'numeric','1d'},{'nonempty','positive','<=',1}));
 addOptional(p,'paired',false,@islogical);
 addOptional(p,'nonparam',true,@islogical);
 addOptional(p,'ploton',true,@islogical);
-addOptional(p,'demo_on',false,@islogical);
 
 parse(p,varargin{:});
 
 input_arguments = struct2cell(p.Results);
 input_flags = fieldnames(p.Results);
 eval(['[', sprintf('%s ', input_flags{:}), '] = deal(input_arguments{:});']);
-
-% DEMO
-if demo_on
-    demo_func(FDR,paired,nonparam);
-    return;
-else
-    assert(~isempty(group1) & ~isempty(group2),'group1 and group 2 required for non demo')
-end
 
 %Change infs to nans
 group1(isinf(group1)) = nan;
@@ -59,9 +102,7 @@ if nonparam
     else
         testfun = @ranksum;
     end
-else
-    disp('HERE')
-    
+else   
     if paired 
         [~,p_values]=ttest(group1',group2');
     else
@@ -161,7 +202,6 @@ end
 
 
 function demo_func(FDR,paired,nonparam)
-close all;
 %Define dataset
 N1 = 200;
 N2 = 200;
@@ -183,15 +223,15 @@ x=linspace(-5,5,T)';
 %Generate data
 for ii = 1:N
     if ii<=N1
-        data1 = smooth(f1(x)+randn(size(x))*.125)+1;
+        data1 = smooth(f1(x)+randn(size(x))*.25)+1;
         data1(end-10:end) = nan;
         g1(:,ii) = data1;
     else
-        data2 = smooth(f2(x)+randn(size(x))*.125)+1;
+        data2 = smooth(f2(x)+randn(size(x))*.25)+1;
         data2(end-3:end) = nan;
         g2(:,ii-N1) = data2;
     end
 end
 
-fdr_bhtest_gen('group1',g1, 'group2',g2, 'FDR',FDR,'paired', paired,'nonparam',nonparam);
+fdr_bhtest_gen(g1,g2, 'FDR',FDR,'paired', paired,'nonparam',nonparam);
 end

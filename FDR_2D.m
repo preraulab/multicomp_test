@@ -74,8 +74,8 @@ function [sigbins, p_adj, p_values] =  FDR_2D(varargin)
 if nargin == 0
     FDR = .1;
     paired = false;
-    demo_func(FDR,paired,true);
-    demo_func(FDR,paired,false);
+    demo_func(FDR,true,true,'dependent');
+    demo_func(FDR,false,false,'independent');
     return;
 end
 
@@ -191,10 +191,10 @@ if ploton
     suptitle([mstring ' ' pstring ' ' npstring ' Test with FDR of ' num2str(FDR)])
 end
 
-function demo_func(FDR,paired,nonparam)
+function demo_func(FDR,paired,nonparam,method)
 
 %Define dataset
-N1 = 20;
+N1 = 30;
 N2 = 30;
 N = N1 + N2;
 
@@ -221,6 +221,6 @@ for ii = 1:N
     end
 end
 
-FDR_2D(group1,group2,'FDR',FDR,'method','dependent','paired', paired,'nonparam',nonparam);
+FDR_2D(group1,group2,'FDR',FDR,'method',method,'paired', paired,'nonparam',nonparam);
 
 

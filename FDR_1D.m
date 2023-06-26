@@ -60,10 +60,10 @@ function [sigbins_all, p_adj, p_values] = FDR_1D(varargin)
 %     end
 % 
 %     %Run nonparametric test
-%     FDR_1D(group1,group2,'FDR',.1,'paired', false,'method','dependent','nonparam',false);
+%     FDR_1D(group1,group2,'FDR', .1,'paired', true, 'method', 'dependent','nonparam',false);
 %
 %     %Run parametric test
-%     FDR_1D(group1,group2,'FDR',.1,'paired', false,,'method','dependent','nonparam',true);
+%     FDR_1D(group1,group2,'FDR', .1,'paired', false,'method', 'independent','nonparam',true);
 %
 % See also:
 %   FDR_2D, fdr_bh
@@ -74,8 +74,8 @@ function [sigbins_all, p_adj, p_values] = FDR_1D(varargin)
 if nargin == 0
     FDR = .1;
     paired = false;
-    demo_func(FDR,paired,true);
-    demo_func(FDR,paired,false);
+    demo_func(FDR,true,true,'dependent');
+    demo_func(FDR,false,false,'independent');
     return;
 end
 
@@ -228,7 +228,7 @@ end
 end
 
 
-function demo_func(FDR,paired,nonparam)
+function demo_func(FDR,paired, nonparam, method)
 %Define dataset
 N1 = 200;
 N2 = 200;
@@ -260,5 +260,5 @@ for ii = 1:N
     end
 end
 
-FDR_1D(g1,g2, 'FDR',FDR,'paired', paired,'nonparam',nonparam);
+FDR_1D(g1,g2, 'FDR',FDR,'method',method,'paired', paired,'nonparam',nonparam);
 end

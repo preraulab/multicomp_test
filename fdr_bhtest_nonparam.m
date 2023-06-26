@@ -79,10 +79,16 @@ sigbins_all = p_adj<FDR;
 %Plot the results
 if ploton
     figure
+    ax = figdesign(2,1,'type','usletter','orient','landscape');
+    axes(ax(1))
+    hold all;
+    plot(group1,'color',[1 0 0 .1])
+    plot(group2,'color',[0 0 1 .1])
+    legend('Group 1','Group 2')
+
+    axes(ax(2))
     [cons_all,sig_regions]=consecutive_runs(sigbins_all);
     [cons_nan,nan_regions]=consecutive_runs(isnan(p_values));
-
-    %     figure('units','normalized','color','w');
     hold all;
     xvals = 1:length(p_adj);
 
@@ -101,6 +107,7 @@ if ploton
     end
     uistack(h_sigregions,'bottom');
 
+    h_nanregions = [];
     for ii = 1:length(cons_nan)
         inds = nan_regions{ii};
 
@@ -109,7 +116,10 @@ if ploton
 
         end
     end
-    uistack(h_nanregions,'bottom');
+
+    if ~isempty(h_nanregions)
+        uistack(h_nanregions,'bottom');
+    end
 
     %Plot adjusted pvalues and threshold line
     h_pasj = plot(xvals, p_adj,'linewidth',2,'color','b');
@@ -119,7 +129,11 @@ if ploton
     if isempty(h_sigregions)
         legend([h_pasj, h_threshold],{'Adjusted p-values','Threshold'});
     else
-        legend([h_pasj, h_threshold, h_sigregions(1)],{'Adjusted p-values','Threshold','Significant Regions','No Data Regions'});
+        if ~isempty(h_nanregions)
+            legend([h_pasj, h_threshold, h_sigregions(1), h_nanregions(1)],{'Adjusted p-values','Threshold','Significant Regions','No Data Regions'});
+        else
+            legend([h_pasj, h_threshold, h_sigregions(1)],{'Adjusted p-values','Threshold','Significant Regions'});
+        end
     end
 
     xlabel('Bin Number');

@@ -72,36 +72,56 @@ p_values = reshape(linear_p_values, R,C);
 
 %Plot results
 if ploton
+    g1_mean = mean(reshape(g1_redim, R, C, N1),3,'omitnan');
+    g2_mean = mean(reshape(g2_redim, R, C, N2),3,'omitnan');
 
     figure
-    ax = figdesign(1,2,'type','usletter','orient','landscape');
+    ax = figdesign(2,2,'type','usletter','orient','landscape');
     axes(ax(1))
+    imagesc(g1_mean)
+    cx = climscale;
+    colormap(ax(1),gouldian);
+    title('Group 1')
+
+    axes(ax(2))
+    imagesc(g2_mean)
+    caxis(cx);
+    colormap(ax(2),gouldian);
+    title('Group 2')
+
+    axes(ax(3))
     hold all
 
-    imagesc(mean(reshape(g1_redim, R, C, N1),3,'omitnan')-mean(reshape(g2_redim, R, C, N2),3,'omitnan'));
+    imagesc(g1_mean - g2_mean);
     [r,c] = find(isnan(p_adj));
-    plot(c,r,'x')
+    if ~isempty(r)
+        plot(c,r,'x')
+    end
 
     cx = climscale;
     caxis(max(abs(cx))*[-1 1]);
-    colormap(redblue_equalized);
+    colormap(ax(3),redblue_equalized);
     colorbar
 
     %Plot significant regions as a contour
     if(any(sigbins(:)))
-        [~, h_sigregions] = contour(sigbins,[1 1],'color','k','linewidth',1.5);
-        legend(h_sigregions,'Regions of Significance','NaNs');
+        [~,hc] = contour(sigbins,[1 1],'color','k','linewidth',1.5);
+        legend(hc,'Regions of Significance')
     end
 
     axis tight;
+    title('Group 1 - Group 2')
 
-    axes(ax(2))
+    axes(ax(4))
     imagesc(p_adj)
     hold on
-    plot(c,r,'x')
+    if ~isempty(r)
+        plot(c,r,'x')
+    end
+
     caxis([0 FDR*2])
     axis xy
-    colormap(gca,'parula');
+    colormap(ax(4),'parula');
     title('Adjusted p-values')
     colorbar
 end
@@ -127,7 +147,7 @@ f2 = @(x)fliplr(peaks(x))*rand*10 + randn(T)*5+50;
 for ii = 1:N
     if ii<=N1
         data = f1(T);
-        data(:,end-4:end) = nan;
+        data(:,end-6:end) = nan;
         group1(:,:,ii) = data;
     else
         data = f2(T);

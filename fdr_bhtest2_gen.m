@@ -108,7 +108,7 @@ g1_redim(isinf(g1_redim)) = nan;
 g2_redim(isinf(g2_redim)) = nan;
 
 %Compute test
-[linear_sigbins, linear_p_adj, linear_p_values] = fdr_bhtest_gen('group1',g1_redim, 'group2',g2_redim,  ...
+[linear_sigbins, linear_p_adj, linear_p_values] = fdr_bhtest_gen(g1_redim,g2_redim,  ...
     'FDR',FDR,'paired',paired,'nonparam',nonparam,'ploton',false);
 
 %Reshape output

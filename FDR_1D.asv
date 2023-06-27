@@ -170,20 +170,23 @@ if ploton
     yl=ylim;
 
     %Plot regions of significance
+    h_sigregions = zeros(length(cons_all));
+
     for ii = 1:length(cons_all)
         inds = sig_regions{ii};
 
         if ~isempty(inds)
-            h_sigregions = fill([xvals(inds(1))-.5 xvals(inds(1))-.5 xvals(inds(end))+.5 xvals(inds(end))+.5],[yl(1) yl(2) yl(2) yl(1)],'g','edgecolor','none');
+            h_sigregions(ii) = fill([xvals(inds(1))-.5 xvals(inds(1))-.5 xvals(inds(end))+.5 xvals(inds(end))+.5],[yl(1) yl(2) yl(2) yl(1)],'g','edgecolor','none');
         end
     end
     uistack(h_sigregions,'bottom');
 
+    h_nanregions = zeros(1,length(cons_nan));
     for ii = 1:length(cons_nan)
         inds = nan_regions{ii};
 
         if ~isempty(inds)
-            h_nanregions = fill([xvals(inds(1))-.5 xvals(inds(1))-.5 xvals(inds(end))+.5 xvals(inds(end))+.5],[yl(1) yl(2) yl(2) yl(1)],'r','edgecolor','none');
+            h_nanregions(ii) = fill([xvals(inds(1))-.5 xvals(inds(1))-.5 xvals(inds(end))+.5 xvals(inds(end))+.5],[yl(1) yl(2) yl(2) yl(1)],'r','edgecolor','none');
         end
     end
 
@@ -221,7 +224,7 @@ if ploton
         npstring = 'Parametric';
     end
 
-    mstring = [upper(method(1)) method(2:end)]; %#ok<FNCOLND> 
+    mstring = [upper(method(1)) method(2:end)];
 
     suptitle([mstring ' ' pstring ' ' npstring ' Test with FDR of ' num2str(FDR)])
 end

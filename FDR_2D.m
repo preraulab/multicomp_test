@@ -93,7 +93,7 @@ addOptional(p,'ploton',true,@islogical);
 
 parse(p,varargin{:});
 
-input_arguments = struct2cell(p.Results);
+input_arguments = struct2cell(p.Results); %#ok<NASGU> 
 input_flags = fieldnames(p.Results);
 eval(['[', sprintf('%s ', input_flags{:}), '] = deal(input_arguments{:});']);
 
@@ -189,7 +189,7 @@ if ploton
         npstring = 'Parametric';
     end
 
-    mstring = [upper(method(1)) method(2:end)];
+    mstring = [upper(method(1)) method(2:end)]; %#ok<FNCOLND> 
 
     suptitle([mstring ' ' pstring ' ' npstring ' Test with FDR of ' num2str(FDR)])
 end

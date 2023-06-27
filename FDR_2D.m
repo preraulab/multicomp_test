@@ -9,11 +9,11 @@ function [sigbins, p_adj, p_values] =  FDR_2D(varargin)
 %   - group1: Numeric 2D array representing the first group of data.
 %   - group2: Numeric 2D array representing the second group of data.
 %   - FDR: (Optional) False Discovery Rate (FDR) threshold for multiple testing correction. Default is 0.1.
-%   - method: (Optional) 'dependent' will use the Benjamini & Yekutieli (2001) procedure, 
+%   - method: (Optional) 'dependent' will use the Benjamini & Yekutieli (2001) procedure,
 %     and 'independent' will use the Benjamini & Hochberg (1995) procedure that assumes data are independent or positively
 %     dependent. Default is 'dependent'
 %   - paired: (Optional) Boolean indicating whether the data in group1 and group2 are paired. Default is false.
-%   - nonparam: (Optional) Boolean indicating whether to use nonparametric test. 
+%   - nonparam: (Optional) Boolean indicating whether to use nonparametric test.
 %               For nonparametric tests, a ranksum test is use for unpaired
 %               an a signrank test is used for paired. Paired an unpaired
 %               t-tests are used otherwise
@@ -35,17 +35,17 @@ function [sigbins, p_adj, p_values] =  FDR_2D(varargin)
 %     N1 = 20;
 %     N2 = 30;
 %     N = N1 + N2;
-%     
+%
 %     %Set peaks resolution
 %     T = 30;
-%     
+%
 %     group1 = zeros(T,T,N1);
 %     group2 = zeros(T,T,N2);
-%     
+%
 %     %Create functions
 %     f1 = @(x)peaks(x)*rand*10 + randn(T)*5+50;
 %     f2 = @(x)fliplr(peaks(x))*rand*10 + randn(T)*5+50;
-%     
+%
 %     %Generate data
 %     for ii = 1:N
 %         if ii<=N1
@@ -58,7 +58,7 @@ function [sigbins, p_adj, p_values] =  FDR_2D(varargin)
 %             group2(:,:,ii-N1) = data;
 %         end
 %     end
-%     
+%
 %     %Run nonparametric test
 %     FDR_2D(group1,group2,'FDR',.1,'paired', false,'nonparam',false);
 %
@@ -72,10 +72,13 @@ function [sigbins, p_adj, p_values] =  FDR_2D(varargin)
 %%
 % DEMO
 if nargin == 0
-    FDR = .1;
-    paired = false;
-    demo_func(FDR,true,true,'dependent');
-    demo_func(FDR,false,false,'independent');
+    %Set a fixed random seed so both demos have the same data
+    seed = randi(10000);
+
+    rng(seed);
+    demo_func(.1,true,true,'dependent');
+    rng(seed);
+    demo_func(.1,false,false,'independent');
     return;
 end
 

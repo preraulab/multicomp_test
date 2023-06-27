@@ -72,10 +72,13 @@ function [sigbins_all, p_adj, p_values] = FDR_1D(varargin)
 
 % DEMO
 if nargin == 0
-    FDR = .1;
-    paired = false;
-    demo_func(FDR,true,true,'dependent');
-    demo_func(FDR,false,false,'independent');
+    %Set a fixed random seed so both demos have the same data
+    seed = randi(10000);
+
+    rng(seed);
+    demo_func(.1,true,true,'dependent');
+    rng(seed);
+    demo_func(.1,false,false,'independent');
     return;
 end
 

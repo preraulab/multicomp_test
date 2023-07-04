@@ -73,8 +73,7 @@ function [sigbins_all, p_adj, p_values] = FDR_1D(varargin)
 % DEMO
 if nargin == 0
     %Set a fixed random seed so both demos have the same data
-    seed = randi(10000);
-
+    seed = 2023;
     rng(seed);
     demo_func(.1,true,true,'dependent');
     rng(seed);
@@ -156,9 +155,9 @@ if ploton
     ax = figdesign(2,1,'type','usletter','orient','landscape');
     axes(ax(1))
     hold all;
-    plot(group1,'color',[1 0 0 .1])
-    plot(group2,'color',[0 0 1 .1])
-    legend('Group 1','Group 2')
+    h1 = plot(group1,'color',[1 0 0 .1]);
+    h2 = plot(group2,'color',[0 0 1 .1]);
+    legend([h1(1), h2(1)], 'Group1', ' Group2')
 
     axes(ax(2))
     [cons_all,sig_regions]=consecutive_runs(sigbins_all);

@@ -73,9 +73,9 @@ function [sigbins, p_adj, p_values] =  FDR_2D(varargin)
 % DEMO
 if nargin == 0
     %Set a fixed random seed so both demos have the same data
-    seed = randi(10000);
-
+    seed = randi(2023);
     rng(seed);
+
     demo_func(.1,true,true,'dependent');
     rng(seed);
     demo_func(.1,false,false,'independent');

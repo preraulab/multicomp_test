@@ -27,7 +27,10 @@ function [sigbins_all, sig_regions, acceptance_bounds, true_stat] = gpermtest(va
 
 %Call the examples for no input
 if nargin==0
-    demo;
+    %Set a fixed random seed so both demos have the same data
+    seed = 2023;
+    rng(seed);
+    demo_func;
     return;
 end
 
@@ -141,14 +144,22 @@ acceptance_bounds=hi;%[hi,lo];
 
 %Plot the results
 if ploton
+    figure
+    ax = figdesign(2,1,'type','usletter','orient','landscape');
+    axes(ax(1))
+    hold all;
+    h1 = plot(group1,'color',[1 0 0 .1]);
+    h2 = plot(group2,'color',[0 0 1 .1]);
+    legend([h1(1), h2(1)], 'Group1', ' Group2')
+
     xvals = 1:length(sigbins_all);
-    figure('units','normalized','position',[0 0 1 1],'color','w');
-    
-    %Plot raw data if not too big
-    if iterations<500
-        plot(xvals, null_mat','color',[.8 .8 .8]);
-    end
-    
+
+%     figure('units','normalized','position',[0 0 1 1],'color','w');
+%     %Plot raw data if not too big
+%     if iterations<500
+%         plot(xvals, null_mat','color',[.8 .8 .8]);
+%     end
+    axes(ax(2))
     %Plot bounds and stat
     hold on;
     h_bounds = plot(xvals,hi,'r','linewidth',2);
@@ -179,11 +190,10 @@ end
 end
 
 
-function demo
-
+function demo_func
 %Define dataset
 N1 = 200;
-N2 = 303;
+N2 = 200;
 N = N1+N2;
 
 %Set time resolution
@@ -202,11 +212,14 @@ x=linspace(-5,5,T)';
 %Generate data
 for ii = 1:N
     if ii<=N1
-        g1(:,ii) = smooth(f1(x)+randn(size(x))*.125);
+        data1 = smooth(f1(x)+randn(size(x))*.25)+1;
+        data1(end-10:end) = nan;
+        g1(:,ii) = data1;
     else
-        g2(:,ii-N1) = smooth(f2(x)+randn(size(x))*.125);
+        data2 = smooth(f2(x)+randn(size(x))*.25)+1;
+        data2(end-3:end) = nan;
+        g2(:,ii-N1) = data2;
     end
 end
-
 gpermtest(g1, g2);
 end

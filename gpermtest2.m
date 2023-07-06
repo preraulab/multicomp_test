@@ -26,7 +26,10 @@ function [sigbins, acceptance_bounds, true_stat] = gpermtest2(varargin)
 
 %Call the examples for no input
 if nargin == 0
-    demo;
+    %Set a fixed random seed so both demos have the same data
+    seed = 2023;
+    rng(seed);
+    demo_func;
     return;
 end
 
@@ -68,46 +71,66 @@ acceptance_bounds = reshape(linear_bounds, R,C);
 true_stat = reshape(linear_true_stat, R,C);
 
 if ploton
+    % should mean change to statfnc? But would have to deal with dims
+    g1_mean = mean(reshape(g1_redim, R, C, N1),3,'omitnan');
+    g2_mean = mean(reshape(g2_redim, R, C, N2),3,'omitnan');
     figure
+    ax = figdesign(2,2,'type','usletter','orient','landscape');
     
+    axes(ax(1))
+    imagesc(g1_mean)
+    cx = climscale;
+    colormap(ax(1),gouldian);
+    title('Group 1')
+
+    axes(ax(2))
+    imagesc(g2_mean)
+    caxis(cx);
+    colormap(ax(2),gouldian);
+    title('Group 2')
+
+    axes(ax(3))
     hold all
-    imagesc(nanmean(reshape(g1_redim, R, C, N1),3)-nanmean(reshape(g2_redim, R, C, N2),3));
+    imagesc(g1_mean - g2_mean);
     
     cx = climscale;
     caxis(max(abs(cx))*[-1 1]);
-    colormap(redbluemap);
+    colormap(ax(3),redblue_equalized);
     colorbar
-    
     if any(sigbins,'all')
         [~,h_sigregions] = contour(sigbins,1,'color','k', 'LineWidth', 1.5);
         legend(h_sigregions,'Significant Regions');
     end
+    axis tight;
+    title('Group 1 - Group 2')
 end
 
-function demo
-
+function demo_func
 %Define dataset
-N1 = 20;
-N2 = 33;
+N1 = 30;
+N2 = 30;
 N = N1 + N2;
 
 %Set peaks resolution
-T = 50;
+T = 30;
 
 group1 = zeros(T,T,N1);
 group2 = zeros(T,T,N2);
 
 %Create functions
-f1 =@(x)peaks(x)*rand*10 + randn(T)*.5;
-f2 =@(x)fliplr(peaks(x))*rand*10 + randn(T)*.5;
+f1 = @(x)peaks(x)*rand*10 + randn(T)*5+50;
+f2 = @(x)fliplr(peaks(x))*rand*10 + randn(T)*5+50;
 
 %Generate data
 for ii = 1:N
     if ii<=N1
-        group1(:,:,ii) = f1(T);
+        data = f1(T);
+        data(:,end-6:end) = nan;
+        group1(:,:,ii) = data;
     else
-        group2(:,:,ii-N1) = f2(T);
+        data = f2(T);
+        data(:,end-2:end) = nan;
+        group2(:,:,ii-N1) = data;
     end
 end
-
 gpermtest2(group1, group2);

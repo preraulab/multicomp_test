@@ -68,7 +68,7 @@ function [sigbins, p_adj, p_values] =  FDR_2D(varargin)
 % See also:
 %   FDR_1D, fdr_bh
 %
-%   Copyright 2023 Michael J. Prerau Laboratory. - http://www.sleepEEG.org
+%   Copyright 2024 Michael J. Prerau Laboratory. - http://www.sleepEEG.org
 %%
 % DEMO
 if nargin == 0

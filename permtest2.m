@@ -19,7 +19,7 @@ function [sigbins, tstat_obs, thresh, perm_tmax] = permtest2(varargin)
 %   Example:
 %       permtest2(); %RUNS DEMO
 %
-%   Copyright 2021 Michael J. Prerau, Ph.D.
+%   Copyright 2024 Michael J. Prerau, Ph.D.
 %
 %   Last modified 11/01/2021
 %********************************************************************

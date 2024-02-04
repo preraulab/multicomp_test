@@ -20,7 +20,7 @@ function [sigbins_all, sig_regions, acceptance_bounds, true_stat] = gpermtest(va
 %   Example:
 %      gpermtest(); %RUNS DEMO
 %
-%   Copyright 2021 Michael J. Prerau, Ph.D.
+%   Copyright 2024 Michael J. Prerau, Ph.D.
 %
 %   Last modified 11/01/2021
 %********************************************************************

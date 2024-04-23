@@ -6,8 +6,8 @@ function [sigbins, p_adj, p_values] =  FDR_2D(varargin)
 %   FDR_2D(group1, group2, <options>)
 %
 % Input:
-%   - group1: Numeric 2D array representing the first group of data.
-%   - group2: Numeric 2D array representing the second group of data.
+%   - group1: Numeric <dimensions> x <trials> array representing the first group of data.
+%   - group2: Numeric <dimensions> x <trials> array representing the second group of data.
 %   - FDR: (Optional) False Discovery Rate (FDR) threshold for multiple testing correction. Default is 0.1.
 %   - method: (Optional) 'dependent' will use the Benjamini & Yekutieli (2001) procedure,
 %     and 'independent' will use the Benjamini & Hochberg (1995) procedure that assumes data are independent or positively
@@ -15,7 +15,7 @@ function [sigbins, p_adj, p_values] =  FDR_2D(varargin)
 %   - paired: (Optional) Boolean indicating whether the data in group1 and group2 are paired. Default is false.
 %   - nonparam: (Optional) Boolean indicating whether to use nonparametric test.
 %               For nonparametric tests, a ranksum test is use for unpaired
-%               an a signrank test is used for paired. Paired an unpaired
+%               an a signrank test is used for paired. Paired and unpaired
 %               t-tests are used otherwise
 %               Default is true.
 %   - ploton: (Optional) Boolean indicating whether to plot the results. Default is true.

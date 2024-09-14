@@ -134,12 +134,14 @@ if ploton
     cx = climscale;
     colormap(ax(1),gouldian);
     title('Group 1')
+    axis xy;
 
     axes(ax(2))
     imagesc(g2_mean)
     caxis(cx);
     colormap(ax(2),gouldian);
     title('Group 2')
+    axis xy;
 
     axes(ax(3))
     hold all
@@ -163,6 +165,7 @@ if ploton
 
     axis tight;
     title('Group 1 - Group 2')
+    axis xy;
 
     axes(ax(4))
     imagesc(p_adj)

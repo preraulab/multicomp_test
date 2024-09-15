@@ -93,7 +93,7 @@ addOptional(p,'ploton',true,@islogical);
 
 parse(p,varargin{:});
 
-input_arguments = struct2cell(p.Results); %#ok<NASGU> 
+input_arguments = struct2cell(p.Results); %#ok<NASGU>
 input_flags = fieldnames(p.Results);
 eval(['[', sprintf('%s ', input_flags{:}), '] = deal(input_arguments{:});']);
 
@@ -128,13 +128,16 @@ if ploton
     g2_mean = mean(reshape(g2_redim, R, C, N2),3,'omitnan');
 
     figure
-    ax = figdesign(2,2,'type','usletter','orient','landscape');
+    ax = figdesign(2,2,'type','usletter','orient','landscape','margins',[.05 .1 .1 .1 .1]);
     axes(ax(1))
     imagesc(g1_mean)
     cx = climscale;
     colormap(ax(1),gouldian);
     title('Group 1')
     axis xy;
+    pos = ax(1).Position;
+    colorbar(ax(1));
+    ax(1).Position = pos;
 
     axes(ax(2))
     imagesc(g2_mean)
@@ -142,6 +145,9 @@ if ploton
     colormap(ax(2),gouldian);
     title('Group 2')
     axis xy;
+    pos = ax(2).Position;
+    colorbar(ax(2));
+    ax(2).Position = pos;
 
     axes(ax(3))
     hold all
@@ -155,7 +161,9 @@ if ploton
     cx = climscale;
     caxis(max(abs(cx))*[-1 1]);
     colormap(ax(3),redblue_equalized);
-    colorbar
+    pos = ax(3).Position;
+    colorbar(ax(3));
+    ax(3).Position = pos;
 
     %Plot significant regions as a contour
     if(any(sigbins(:)))
@@ -178,7 +186,9 @@ if ploton
     axis xy
     colormap(ax(4),'parula');
     title('Adjusted p-values')
-    colorbar
+    pos = ax(4).Position;
+    colorbar(ax(4));
+    ax(4).Position = pos;
 
     if paired
         pstring = 'Paired';
@@ -192,9 +202,10 @@ if ploton
         npstring = 'Parametric';
     end
 
-    mstring = [upper(method(1)) method(2:end)]; %#ok<FNCOLND> 
+    mstring = [upper(method(1)) method(2:end)]; %#ok<FNCOLND>
 
-    suptitle([mstring ' ' pstring ' ' npstring ' Test with FDR of ' num2str(FDR)])
+    t = suptitle([mstring ' ' pstring ' ' npstring ' Test with FDR of ' num2str(FDR)]);
+    t.FontSize = 20;
 end
 
 function demo_func(FDR,paired,nonparam,method)

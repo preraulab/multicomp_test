@@ -69,6 +69,7 @@ function [sigbins, p_adj, p_values] =  FDR_2D(varargin)
 %   FDR_1D, fdr_bh
 %
 %   Copyright 2024 Michael J. Prerau Laboratory. - http://www.sleepEEG.org
+
 %%
 % DEMO
 if nargin == 0
@@ -83,13 +84,13 @@ if nargin == 0
 end
 
 p = inputParser;
-addRequired(p,'group1',@(x)validateattributes(x,{'numeric','2d'},{'nonempty'}));
-addRequired(p,'group2',@(x)validateattributes(x,{'numeric','2d'},{'nonempty'}));
-addOptional(p,'FDR',0.1,@(x)validateattributes(x,{'numeric','1d'},{'nonempty','positive','<=',1}));
-addOptional(p,'method', 'dependent', @(x)ismember(x,{'dependent','independent'}));
-addOptional(p,'paired',false,@islogical);
-addOptional(p,'nonparam',true,@islogical);
-addOptional(p,'ploton',true,@islogical);
+addRequired(p,'group1',@(x)validateattributes(x,{'numeric'},{'nonempty','ndims',3}));
+addRequired(p,'group2',@(x)validateattributes(x,{'numeric'},{'nonempty','ndims',3}));
+addOptional(p,'FDR',0.1,@(x)validateattributes(x,{'numeric'},{'real','finite','positive','scalar','<=',1}));
+addOptional(p,'method', 'dependent', @(x) any(validatestring(x, {'dependent','independent'})));
+addOptional(p,'paired', false, @(x) validateattributes(x,{'logical'},{'scalar'}));
+addOptional(p,'nonparam', true, @(x) validateattributes(x,{'logical'},{'scalar'}));
+addOptional(p,'ploton', true, @(x) validateattributes(x,{'logical'},{'scalar'}));
 
 parse(p,varargin{:});
 
@@ -141,7 +142,7 @@ if ploton
 
     axes(ax(2))
     imagesc(g2_mean)
-    caxis(cx);
+    clim(cx);
     colormap(ax(2),gouldian);
     title('Group 2')
     axis xy;
@@ -150,7 +151,7 @@ if ploton
     ax(2).Position = pos;
 
     axes(ax(3))
-    hold all
+    hold on
 
     imagesc(g1_mean - g2_mean);
     [r,c] = find(isnan(p_adj));
@@ -159,7 +160,7 @@ if ploton
     end
 
     cx = climscale;
-    caxis(max(abs(cx))*[-1 1]);
+    clim(max(abs(cx))*[-1 1]);
     colormap(ax(3),redblue_equalized);
     pos = ax(3).Position;
     colorbar(ax(3));
@@ -182,7 +183,7 @@ if ploton
         plot(c,r,'x')
     end
 
-    caxis([0 FDR*2])
+    clim([0 FDR*2])
     axis xy
     colormap(ax(4),'parula');
     title('Adjusted p-values')
@@ -207,9 +208,10 @@ if ploton
     t = suptitle([mstring ' ' pstring ' ' npstring ' Test with FDR of ' num2str(FDR)]);
     t.FontSize = 20;
 end
+end
+
 
 function demo_func(FDR,paired,nonparam,method)
-
 %Define dataset
 N1 = 30;
 N2 = 30;
@@ -239,5 +241,4 @@ for ii = 1:N
 end
 
 FDR_2D(group1,group2,'FDR',FDR,'method',method,'paired', paired,'nonparam',nonparam);
-
-
+end

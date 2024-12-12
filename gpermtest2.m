@@ -75,16 +75,21 @@ if ploton
     g1_mean = mean(reshape(g1_redim, R, C, N1),3,'omitnan');
     g2_mean = mean(reshape(g2_redim, R, C, N2),3,'omitnan');
     figure
-    ax = figdesign(2,2,'type','usletter','orient','landscape');
+    ax = figdesign(1,3,'type','usletter','orient','landscape');
+
+    linkaxes(ax);
+    linkcaxes(ax(1:2));
     
     axes(ax(1))
     imagesc(g1_mean)
+    axis xy;
     cx = climscale;
     colormap(ax(1),gouldian);
     title('Group 1')
 
     axes(ax(2))
     imagesc(g2_mean)
+    axis xy;
     caxis(cx);
     colormap(ax(2),gouldian);
     title('Group 2')

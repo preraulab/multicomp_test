@@ -140,7 +140,7 @@ hi = gbounds;
 %Find the significant bins
 sigbins_all=(abs(true_stat)>=hi);% | true_stat<=lo);
 acceptance_bounds=hi;%[hi,lo];
-[cons_all,sig_regions]=consecutive(sigbins_all);
+[cons_all,sig_regions]=consecutive_runs(sigbins_all);
 
 %Plot the results
 if ploton

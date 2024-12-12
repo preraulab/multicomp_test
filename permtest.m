@@ -21,7 +21,7 @@ function [sigbins_all, tstat_obs, thresh, perm_tmax] = permtest(varargin)
 %
 %   Copyright 2024 Michael J. Prerau, Ph.D.
 %
-%   Last modified 11/01/2021
+%   Last modified 12/10/2024
 %********************************************************************
 
 %Call the examples for no input
@@ -30,26 +30,27 @@ if nargin==0
     return;
 end
 
+%%
+
 %Parse inputs to extract just the xy axis locations
 p = inputParser;
-addRequired(p,'group1',@(x)validateattributes(x,{'numeric','2d'},{'nonempty'}));
-addRequired(p,'group2',@(x)validateattributes(x,{'numeric','2d'},{'nonempty'}));
-addOptional(p,'alpha_level',0.05,@(x)validateattributes(x,{'numeric','1d'},{'positive','<=',1}));
-addOptional(p,'iterations',1000,@(x)validateattributes(x,{'numeric','1d'},{'positive'}));
-addOptional(p,'ploton',true,@islogical);
+addRequired(p,'group1',@(x)validateattributes(x,{'numeric'},{'nonempty','2d'}));
+addRequired(p,'group2',@(x)validateattributes(x,{'numeric'},{'nonempty','2d'}));
+addOptional(p,'alpha_level',0.05,@(x)validateattributes(x,{'numeric'},{'real','finite','positive','scalar','<=',1}));
+addOptional(p,'iterations',10000,@(x)validateattributes(x,{'numeric'},{'real','finite','positive','integer','scalar'}));
+addOptional(p,'ploton',true,@(x)validateattributes(x,{'logical'},{'scalar'}));
 
 parse(p,varargin{:});
 
-input_arguments = struct2cell(p.Results);
+input_arguments = struct2cell(p.Results); %#ok<NASGU>
 input_flags = fieldnames(p.Results);
 eval(['[', sprintf('%s ', input_flags{:}), '] = deal(input_arguments{:});']);
 
-assert(any(isfinite(group1),'all') && any(isfinite(group2),'all'), 'Groups must have valid numeric data')
+assert(any(isfinite(group1),'all') && any(isfinite(group2),'all'), 'Groups must have valid numeric data') %#ok<USENS>
 
 %Remove nan dimensions
 p1 = group1(:,any(~isnan(group1)));
 p2 = group2(:,any(~isnan(group2)));
-
 
 %Combine both groups
 all=[p1 p2];
@@ -107,7 +108,7 @@ if ploton
     
     for ii=1:length(cons_all)
         inds=sig_regions{ii};
-        h_sigregions(ii) = fill(xvals([inds(1) inds(1) inds(end) inds(end)]),[yl(1) yl(2) yl(2) yl(1)],'g','edgecolor','none');
+        h_sigregions(ii) = fill(xvals([inds(1) inds(1) inds(end) inds(end)]),[yl(1) yl(2) yl(2) yl(1)],'g','edgecolor','none'); %#ok<AGROW>
     end
     
     h_stat = plot(xvals, tstat_obs,'b','linewidth',2);
@@ -129,7 +130,6 @@ end
 
 
 function demo
-
 %Define dataset
 N1 = 200;
 N2 = 303;

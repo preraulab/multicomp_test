@@ -6,8 +6,8 @@ function [sigbins_all, p_adj, p_values] = FDR_1D(varargin)
 %   FDR_1D(group1, group2, <options>)
 %
 % Input:
-%   - group1: Numeric 1D vector representing the first group of data.
-%   - group2: Numeric 1D vector representing the second group of data.
+%   - group1: Numeric 1D vector x <trials> array representing the first group of data.
+%   - group2: Numeric 1D vector x <trials> array representing the second group of data.
 %   - FDR: (Optional) False Discovery Rate (FDR) threshold for multiple testing correction. Default is 0.1.
 %   - method: (Optional) 'dependent' will use the Benjamini & Yekutieli (2001) procedure,
 %     and 'independent' will use the Benjamini & Hochberg (1995) procedure that assumes data are independent or positively
@@ -70,6 +70,7 @@ function [sigbins_all, p_adj, p_values] = FDR_1D(varargin)
 %
 %   Copyright 2024 Michael J. Prerau Laboratory. - http://www.sleepEEG.org
 
+%%
 % DEMO
 if nargin == 0
     %Set a fixed random seed so both demos have the same data
@@ -82,13 +83,13 @@ if nargin == 0
 end
 
 p = inputParser;
-addRequired(p,'group1',@(x)validateattributes(x,{'numeric','2d'},{'nonempty'}));
-addRequired(p,'group2',@(x)validateattributes(x,{'numeric','2d'},{'nonempty'}));
-addOptional(p,'FDR',0.1,@(x)validateattributes(x,{'numeric','1d'},{'nonempty','positive','<=',1}));
-addOptional(p,'method', 'dependent', @(x)ismember(x,{'dependent','independent'}));
-addOptional(p,'paired',false,@islogical);
-addOptional(p,'nonparam',true,@islogical);
-addOptional(p,'ploton',true,@islogical);
+addRequired(p,'group1',@(x)validateattributes(x,{'numeric'},{'nonempty','2d'}));
+addRequired(p,'group2',@(x)validateattributes(x,{'numeric'},{'nonempty','2d'}));
+addOptional(p,'FDR',0.1,@(x)validateattributes(x,{'numeric'},{'real','finite','positive','scalar','<=',1}));
+addOptional(p,'method', 'dependent', @(x) any(validatestring(x, {'dependent','independent'})));
+addOptional(p,'paired', false, @(x) validateattributes(x,{'logical'},{'scalar'}));
+addOptional(p,'nonparam', true, @(x) validateattributes(x,{'logical'},{'scalar'}));
+addOptional(p,'ploton', true, @(x) validateattributes(x,{'logical'},{'scalar'}));
 
 parse(p,varargin{:});
 
@@ -97,7 +98,7 @@ input_flags = fieldnames(p.Results);
 eval(['[', sprintf('%s ', input_flags{:}), '] = deal(input_arguments{:});']);
 
 %Change infs to nans
-group1(isinf(group1)) = nan; %#ok<*NODEF> 
+group1(isinf(group1)) = nan; %#ok<*NODEF>
 group2(isinf(group2)) = nan;
 if nonparam
     if paired
@@ -154,7 +155,7 @@ if ploton
     figure
     ax = figdesign(2,1,'type','usletter','orient','landscape');
     axes(ax(1))
-    hold all;
+    hold on;
     h1 = plot(group1,'color',[1 0 0 .1]);
     h2 = plot(group2,'color',[0 0 1 .1]);
     legend([h1(1), h2(1)], 'Group1', ' Group2')
@@ -162,7 +163,7 @@ if ploton
     axes(ax(2))
     [cons_all,sig_regions]=consecutive_runs(sigbins_all);
     [cons_nan,nan_regions]=consecutive_runs(isnan(p_values));
-    hold all;
+    hold on;
     xvals = 1:length(p_adj);
 
     %Plot significant regions
@@ -220,7 +221,7 @@ if ploton
         npstring = 'Parametric';
     end
 
-    mstring = [upper(method(1)) method(2:end)]; %#ok<FNCOLND> 
+    mstring = [upper(method(1)) method(2:end)]; %#ok<FNCOLND>
 
     suptitle([mstring ' ' pstring ' ' npstring ' Test with FDR of ' num2str(FDR)])
 end
@@ -263,6 +264,7 @@ FDR_1D(g1,g2, 'FDR',FDR,'method',method,'paired', paired,'nonparam',nonparam);
 end
 
 
+%%
 % fdr_bh() - Executes the Benjamini & Hochberg (1995) and the Benjamini &
 %            Yekutieli (2001) procedure for controlling the false discovery
 %            rate (FDR) of a family of hypothesis tests. FDR is the expected
@@ -507,6 +509,3 @@ crit_p(inds) = crit_p_samp;
 adj_ci_cvrg(inds) = adj_ci_cvrg_samp;
 adj_p(inds) = adj_p_samp;
 end
-
-
-

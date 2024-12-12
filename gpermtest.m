@@ -22,7 +22,7 @@ function [sigbins_all, sig_regions, acceptance_bounds, true_stat] = gpermtest(va
 %
 %   Copyright 2024 Michael J. Prerau, Ph.D.
 %
-%   Last modified 11/01/2021
+%   Last modified 12/10/2024
 %********************************************************************
 
 %Call the examples for no input
@@ -34,27 +34,27 @@ if nargin==0
     return;
 end
 
-
-%Parse inputs 
+%%
+%Parse inputs
 p = inputParser;
-addRequired(p,'group1',@(x)validateattributes(x,{'numeric','2d'},{'nonempty'}));
-addRequired(p,'group2',@(x)validateattributes(x,{'numeric','2d'},{'nonempty'}));
-addOptional(p,'alpha_level',0.05,@(x)validateattributes(x,{'numeric','1d'},{'nonempty','positive','<=',1}));
-addOptional(p,'statfcn', @(x)nanmean(x,2),@(x)isa(x,'function_handle'));
-addOptional(p,'iterations',10000,@(x)validateattributes(x,{'numeric','1d'},{'nonempty','positive'}));
-addOptional(p,'ploton',true,@(x)validateattributes(x,{'logical','1d'},{'nonempty'}));
+addRequired(p,'group1',@(x)validateattributes(x,{'numeric'},{'nonempty','2d'}));
+addRequired(p,'group2',@(x)validateattributes(x,{'numeric'},{'nonempty','2d'}));
+addOptional(p,'alpha_level',0.05,@(x)validateattributes(x,{'numeric'},{'real','finite','positive','scalar','<=',1}));
+addOptional(p,'statfcn',@(x)mean(x,2,'omitnan'),@(x)isa(x, 'function_handle'));
+addOptional(p,'iterations',10000,@(x)validateattributes(x,{'numeric'},{'real','finite','positive','integer','scalar'}));
+addOptional(p,'ploton',true,@(x)validateattributes(x,{'logical'},{'scalar'}));
 
 parse(p,varargin{:});
 
-input_arguments = struct2cell(p.Results);
+input_arguments = struct2cell(p.Results); %#ok<NASGU>
 input_flags = fieldnames(p.Results);
 eval(['[', sprintf('%s ', input_flags{:}), '] = deal(input_arguments{:});']);
 
 %Remove nan dimensions
-p1 = group1(:,any(~isnan(group1)));
+p1 = group1(:,any(~isnan(group1))); %#ok<*USENS>
 p2 = group2(:,any(~isnan(group2)));
 
-[R, C] = size(p1);
+[R, ~] = size(p1);
 
 %Combine both groups
 all=[p1 p2];
@@ -62,7 +62,7 @@ all=[p1 p2];
 Np1=size(p1,2);
 
 %The difference in mean activity between the two scenarios
-true_stat=statfcn(p1)-statfcn(p2);
+true_stat=statfcn(p1)-statfcn(p2); %#ok<NODEF>
 
 %Generate null distribution
 null_mat=zeros(R,iterations);
@@ -70,18 +70,18 @@ null_mat=zeros(R,iterations);
 disp(['Computing test with ' num2str(iterations) ' iterations at alpha level ' num2str(alpha_level) '...']);
 
 %Generate null distribution
-statfcn = statfcn;
+statfcn = statfcn; %#ok<ASGSL>
 disp('Generating null distribution...');
 parfor ii=1:iterations
     %Get a random permutation of the labels
     inds=randperm(size(all,2));
-    
+
     %Indices for new pseudo-groups
     inds1=inds(1:Np1);
     inds2=inds((Np1 + 1):end);
-    
+
     %Compute the stat and take absolute value
-    null_mat(:,ii)=abs((statfcn(all(:,inds1))-statfcn(all(:,inds2))));
+    null_mat(:,ii)=abs((statfcn(all(:,inds1))-statfcn(all(:,inds2)))); %#ok<PFBNS>
 end
 
 %Sort the trials for ease of computing the pointwise N-tile
@@ -107,16 +107,16 @@ if out_crit<iterations && out_crit>0
     while numout<out_crit && cutoff_ind>0
         %Calculate the global bounds
         gbounds=sorted_null(:,cutoff_ind)+1e-5;
-        
+
         %Check the number out of bounds
         numout=sum(any(null_mat>=gbounds & ~isnan(null_mat)));
-        
+
         %Shrink the bounds
         cutoff_ind = cutoff_ind - 1;
-        
+
         waitbar(numout/out_crit,h_sigregions);
     end
-    
+
     close(h_sigregions);
 elseif out_crit>=iterations
     warning('Global bounds includes all iterations. Increase iterations or reduce p-value');
@@ -147,44 +147,44 @@ if ploton
     figure
     ax = figdesign(2,1,'type','usletter','orient','landscape');
     axes(ax(1))
-    hold all;
+    hold on;
     h1 = plot(group1,'color',[1 0 0 .1]);
     h2 = plot(group2,'color',[0 0 1 .1]);
     legend([h1(1), h2(1)], 'Group1', ' Group2')
 
     xvals = 1:length(sigbins_all);
 
-%     figure('units','normalized','position',[0 0 1 1],'color','w');
-%     %Plot raw data if not too big
-%     if iterations<500
-%         plot(xvals, null_mat','color',[.8 .8 .8]);
-%     end
+    %     figure('units','normalized','position',[0 0 1 1],'color','w');
+    %     %Plot raw data if not too big
+    %     if iterations<500
+    %         plot(xvals, null_mat','color',[.8 .8 .8]);
+    %     end
     axes(ax(2))
     %Plot bounds and stat
     hold on;
     h_bounds = plot(xvals,hi,'r','linewidth',2);
     h_stat = plot(xvals, abs(true_stat),'k','linewidth',2);
-    
+
     %Plot significant regions
     yl=ylim;
     h_sigregions = [];
-    
+
     for ii=1:length(cons_all)
         inds = sig_regions{ii};
-        h_sigregions(ii) = fill(xvals([inds(1) inds(1) inds(end) inds(end)]),[yl(1) yl(2) yl(2) yl(1)],'g','edgecolor','none');
+        h_sigregions(ii) = fill(xvals([inds(1) inds(1) inds(end) inds(end)]),[yl(1) yl(2) yl(2) yl(1)],'g','edgecolor','none'); %#ok<AGROW>
         uistack(h_sigregions,'bottom');
     end
-    
+
     %Generate legend
     if isempty(h_sigregions)
         legend([h_bounds, h_stat],{'Global Bounds','Observed Statistic'});
     else
         legend([h_bounds, h_stat, h_sigregions(1)],{'Global Bounds','Observed Statistic','Significant Regions'});
     end
-    
+
     xlabel('Bin Number');
     ylabel('Stat Value');
-    
+
     axis tight;
 end
 end

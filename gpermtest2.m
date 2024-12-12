@@ -21,7 +21,7 @@ function [sigbins, acceptance_bounds, true_stat] = gpermtest2(varargin)
 %
 %   Copyright 2024 Michael J. Prerau, Ph.D.
 %
-%   Last modified 11/01/2021
+%   Last modified 12/10/2024
 %********************************************************************
 
 %Call the examples for no input
@@ -36,16 +36,16 @@ end
 %%
 %Parse inputs 
 p = inputParser;
-addRequired(p,'group1',@(x)validateattributes(x,{'numeric','2d'},{'nonempty'}));
-addRequired(p,'group2',@(x)validateattributes(x,{'numeric','2d'},{'nonempty'}));
-addOptional(p,'alpha_level',0.05,@(x)validateattributes(x,{'numeric','1d'},{'nonempty','positive','<=',1}));
-addOptional(p,'statfcn', @(x)nanmean(x,2),@(x)isa(x,'function_handle'));
-addOptional(p,'iterations',10000,@(x)validateattributes(x,{'numeric','1d'},{'nonempty','positive'}));
-addOptional(p,'ploton',true,@(x)validateattributes(x,{'logical','1d'},{'nonempty'}));
+addRequired(p,'group1',@(x)validateattributes(x,{'numeric'},{'nonempty','ndims',3}));
+addRequired(p,'group2',@(x)validateattributes(x,{'numeric'},{'nonempty','ndims',3}));
+addOptional(p,'alpha_level',0.05,@(x)validateattributes(x,{'numeric'},{'real','finite','positive','scalar','<=',1}));
+addOptional(p,'statfcn',@(x)mean(x,2,'omitnan'),@(x)isa(x, 'function_handle'));
+addOptional(p,'iterations',10000,@(x)validateattributes(x,{'numeric'},{'real','finite','positive','integer','scalar'}));
+addOptional(p,'ploton',true,@(x)validateattributes(x,{'logical'},{'scalar'}));
 
 parse(p,varargin{:});
 
-input_arguments = struct2cell(p.Results);
+input_arguments = struct2cell(p.Results); %#ok<NASGU>
 input_flags = fieldnames(p.Results);
 eval(['[', sprintf('%s ', input_flags{:}), '] = deal(input_arguments{:});']);
 
@@ -90,16 +90,16 @@ if ploton
     axes(ax(2))
     imagesc(g2_mean)
     axis xy;
-    caxis(cx);
+    clim(cx);
     colormap(ax(2),gouldian);
     title('Group 2')
 
     axes(ax(3))
-    hold all
+    hold on
     imagesc(g1_mean - g2_mean);
     
     cx = climscale;
-    caxis(max(abs(cx))*[-1 1]);
+    clim(max(abs(cx))*[-1 1]);
     colormap(ax(3),redblue_equalized);
     colorbar
     if any(sigbins,'all')
@@ -109,6 +109,8 @@ if ploton
     axis tight;
     title('Group 1 - Group 2')
 end
+end
+
 
 function demo_func
 %Define dataset
@@ -139,3 +141,4 @@ for ii = 1:N
     end
 end
 gpermtest2(group1, group2);
+end

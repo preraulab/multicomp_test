@@ -21,7 +21,7 @@ function [sigbins, tstat_obs, thresh, perm_tmax] = permtest2(varargin)
 %
 %   Copyright 2024 Michael J. Prerau, Ph.D.
 %
-%   Last modified 11/01/2021
+%   Last modified 12/10/2024
 %********************************************************************
 
 %Call the examples for no input
@@ -34,15 +34,15 @@ end
 
 %Parse inputs to extract just the xy axis locations
 p = inputParser;
-addRequired(p,'group1',@(x)validateattributes(x,{'numeric','2d'},{'nonempty'}));
-addRequired(p,'group2',@(x)validateattributes(x,{'numeric','2d'},{'nonempty'}));
-addOptional(p,'alpha_level',0.05,@(x)validateattributes(x,{'numeric','1d'},{'positive','<=',1}));
-addOptional(p,'iterations',1000,@(x)validateattributes(x,{'numeric','1d'},{'positive'}));
-addOptional(p,'ploton',true,@islogical);
+addRequired(p,'group1',@(x)validateattributes(x,{'numeric'},{'nonempty','ndims',3}));
+addRequired(p,'group2',@(x)validateattributes(x,{'numeric'},{'nonempty','ndims',3}));
+addOptional(p,'alpha_level',0.05,@(x)validateattributes(x,{'numeric'},{'real','finite','positive','scalar','<=',1}));
+addOptional(p,'iterations',10000,@(x)validateattributes(x,{'numeric'},{'real','finite','positive','integer','scalar'}));
+addOptional(p,'ploton',true,@(x)validateattributes(x,{'logical'},{'scalar'}));
 
 parse(p,varargin{:});
 
-input_arguments = struct2cell(p.Results);
+input_arguments = struct2cell(p.Results); %#ok<NASGU>
 input_flags = fieldnames(p.Results);
 eval(['[', sprintf('%s ', input_flags{:}), '] = deal(input_arguments{:});']);
 
@@ -67,10 +67,10 @@ tstat_obs = reshape(linear_tstat_obs, R,C);
 
 if ploton
     figure
-    hold all
-    imagesc(nanmean(reshape(g1_redim, R, C, N1),3)-nanmean(reshape(g2_redim, R, C, N2),3));
+    hold on
+    imagesc(mean(reshape(g1_redim, R, C, N1),3,'omitnan')-mean(reshape(g2_redim, R, C, N2),3,'omitnan'));
     cx = climscale;
-    caxis(max(abs(cx))*[-1 1]);
+    clim(max(abs(cx))*[-1 1]);
     colormap(redbluemap);
     colorbar
     
@@ -79,6 +79,7 @@ if ploton
         legend(h_sigregions,'Significant Regions');
     end
     
+end
 end
 
 
@@ -108,5 +109,4 @@ for ii = 1:N
 end
 
 permtest2(group1,group2);
-
-
+end

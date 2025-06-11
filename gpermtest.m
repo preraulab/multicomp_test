@@ -42,7 +42,7 @@ addRequired(p,'group2',@(x)validateattributes(x,{'numeric'},{'nonempty','2d'}));
 addOptional(p,'alpha_level',0.05,@(x)validateattributes(x,{'numeric'},{'real','finite','positive','scalar','<=',1}));
 addOptional(p,'statfcn',@(x)mean(x,2,'omitnan'),@(x)isa(x, 'function_handle'));
 addOptional(p,'iterations',10000,@(x)validateattributes(x,{'numeric'},{'real','finite','positive','integer','scalar'}));
-addOptional(p,'ploton',true,@(x)validateattributes(x,{'logical'},{'scalar'}));
+addOptional(p,'ploton',true,@(x)validateattributes(x, {'logical', 'numeric'}, {'binary'}));
 
 parse(p,varargin{:});
 

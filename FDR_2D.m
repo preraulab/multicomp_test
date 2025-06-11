@@ -88,9 +88,9 @@ addRequired(p,'group1',@(x)validateattributes(x,{'numeric'},{'nonempty','ndims',
 addRequired(p,'group2',@(x)validateattributes(x,{'numeric'},{'nonempty','ndims',3}));
 addOptional(p,'FDR',0.1,@(x)validateattributes(x,{'numeric'},{'real','finite','positive','scalar','<=',1}));
 addOptional(p,'method', 'dependent', @(x) any(validatestring(x, {'dependent','independent'})));
-addOptional(p,'paired', false, @(x) validateattributes(x,{'logical'},{'scalar'}));
-addOptional(p,'nonparam', true, @(x) validateattributes(x,{'logical'},{'scalar'}));
-addOptional(p,'ploton', true, @(x) validateattributes(x,{'logical'},{'scalar'}));
+addOptional(p,'paired', false, @(x) validateattributes(x, {'logical', 'numeric'}, {'binary'}));
+addOptional(p,'nonparam', true, @(x) validateattributes(x, {'logical', 'numeric'}, {'binary'}));
+addOptional(p,'ploton', true, @(x) validateattributes(x, {'logical', 'numeric'}, {'binary'}));
 
 parse(p,varargin{:});
 

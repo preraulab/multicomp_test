@@ -1,5 +1,5 @@
 function [sigbins_all, p_adj, p_values] = FDR_1D(varargin)
-% FDR_1D Perform statistical comparisons between 1D vectors using a False Discover Rate (FDR) approach
+%FDR_1D Performs statistical comparisons between 1D vectors using a False Discover Rate (FDR) approach
 %
 % Usage:
 %   FDR_1D(group1, group2, <options>)

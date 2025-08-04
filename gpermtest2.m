@@ -1,5 +1,5 @@
 function [sigbins, acceptance_bounds, true_stat] = gpermtest2(varargin)
-%gpermtest2 Computes global acceptance bounds and regions of significance
+%GPERMTEST2 Computes global acceptance bounds and regions of significance
 %for a given statistic for two sets of multidimensional observations
 %
 %   Usage:

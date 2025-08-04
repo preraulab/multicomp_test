@@ -1,5 +1,5 @@
 function [sigbins, p_adj, p_values] = FDR_2D(varargin)
-% FDR_2D Perform statistical comparisons between 2D matrices using a False Discover Rate (FDR) approach
+%FDR_2D Performs statistical comparisons between 2D matrices using a False Discover Rate (FDR) approach
 %
 % Usage:
 %   FDR_2D(group1, group2, <options>)

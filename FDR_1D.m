@@ -1,6 +1,5 @@
 function [sigbins_all, p_adj, p_values] = FDR_1D(varargin)
-% FDR_1D Perform statistical comparisons between 1D vectors using a False
-% Discover Rate (FDR) approach
+% FDR_1D Perform statistical comparisons between 1D vectors using a False Discover Rate (FDR) approach
 %
 % Usage:
 %   FDR_1D(group1, group2, <options>)
@@ -21,54 +20,18 @@ function [sigbins_all, p_adj, p_values] = FDR_1D(varargin)
 %   - ploton: (Optional) Boolean indicating whether to plot the results. Default is true.
 %
 % Output:
-%   - sigbins: Vector indicating significant regions between group1 and group2.
-%   - p_adj: Vector of adjusted p-values after multiple testing correction.
-%   - p_values: Vector of raw p-values.
+%   - sigbins: 1D vector indicating significant segments along the 1D dimension differing between group1 and group2.
+%   - p_adj: 1D Vector of adjusted p-values after multiple testing correction.
+%   - p_values: 1D vector of raw p-values.
 %
 % Example:
 %   %Run FDR_1D() for demo data
-%
-%     %Define dataset
-%     N1 = 200;
-%     N2 = 200;
-%     N = N1+N2;
-%
-%     %Set time resolution
-%     T = 100;
-%
-%     %Initialize data and null matrices
-%     g1 = zeros(T,N1);
-%     g2 = zeros(T,N2);
-%
-%     %Create functions
-%     f1 =@(x)normpdf(x)*(rand*5+3);
-%     f2 =@(x)normpdf(x)*(rand*5+2);
-%
-%     x=linspace(-5,5,T)';
-%
-%     %Generate data
-%     for ii = 1:N
-%         if ii<=N1
-%             data1 = smooth(f1(x)+randn(size(x))*.25)+1;
-%             data1(end-10:end) = nan;
-%             g1(:,ii) = data1;
-%         else
-%             data2 = smooth(f2(x)+randn(size(x))*.25)+1;
-%             data2(end-3:end) = nan;
-%             g2(:,ii-N1) = data2;
-%         end
-%     end
-%
-%     %Run nonparametric test
-%     FDR_1D(group1,group2,'FDR', .1,'paired', true, 'method', 'dependent','nonparam',false);
-%
-%     %Run parametric test
-%     FDR_1D(group1,group2,'FDR', .1,'paired', false,'method', 'independent','nonparam',true);
 %
 % See also:
 %   FDR_2D, fdr_bh
 %
 %   Copyright 2024 Michael J. Prerau Laboratory. - http://www.sleepEEG.org
+%**********************************************************************
 
 %%
 % DEMO
@@ -83,9 +46,11 @@ if nargin == 0
 end
 
 p = inputParser;
-addRequired(p,'group1',@(x)validateattributes(x,{'numeric'},{'nonempty','2d'}));
-addRequired(p,'group2',@(x)validateattributes(x,{'numeric'},{'nonempty','2d'}));
-addOptional(p,'FDR',0.1,@(x)validateattributes(x,{'numeric'},{'real','finite','positive','scalar','<=',1}));
+
+addRequired(p,'group1', @(x)validateattributes(x,{'numeric'},{'nonempty','2d'}));
+addRequired(p,'group2', @(x)validateattributes(x,{'numeric'},{'nonempty','2d'}));
+
+addOptional(p,'FDR', 0.1, @(x)validateattributes(x,{'numeric'},{'real','finite','positive','scalar','<=',1}));
 addOptional(p,'method', 'dependent', @(x) any(validatestring(x, {'dependent','independent'})));
 addOptional(p,'paired', false, @(x) validateattributes(x, {'logical', 'numeric'}, {'binary'}));
 addOptional(p,'nonparam', true, @(x) validateattributes(x, {'logical', 'numeric'}, {'binary'}));
@@ -100,6 +65,8 @@ eval(['[', sprintf('%s ', input_flags{:}), '] = deal(input_arguments{:});']);
 %Change infs to nans
 group1(isinf(group1)) = nan; %#ok<*NODEF>
 group2(isinf(group2)) = nan;
+
+%% Generate p-values from group comparisons
 if nonparam
     if paired
         assert(size(group1,2) == size(group2,2),'There must be the same number of observations for a paired test.')
@@ -107,20 +74,11 @@ if nonparam
     else
         testfun = @ranksum;
     end
-else
-    if paired
-        [~,p_values]=ttest(group1',group2');
-    else
-        [~,p_values]=ttest2(group1',group2');
-    end
 
-end
-
-if nonparam
-    p_values = zeros(1,size(group1,1));
+    p_values = zeros(1, size(group1, 1));
     for ii = 1:length(p_values)
-        g1 = group1(ii,:);
-        g2 = group2(ii,:);
+        g1 = group1(ii, :);
+        g2 = group2(ii, :);
 
         if all(isnan(g1)) && all(isnan(g2))
             p_values(ii) = nan;
@@ -130,12 +88,18 @@ if nonparam
                 g2(isnan(g2)) = 0;
             end
 
-            p_values(ii)=testfun(g1,g2);
+            p_values(ii) = testfun(g1, g2);
         end
     end
-
+else
+    if paired
+        [~,p_values] = ttest(group1',group2');
+    else
+        [~,p_values] = ttest2(group1',group2');
+    end
 end
 
+%Adjust p-value by FDR
 switch method
     case 'dependent'
         method_string = 'dep';
@@ -148,42 +112,49 @@ end
 [~,~,~,p_adj] = fdr_bh(p_values, FDR, method_string);
 
 %Find the significant bins
-sigbins_all = p_adj<FDR;
+sigbins_all = p_adj < FDR;
 
-%Plot the results
+%% Plot results
 if ploton
     figure
     ax = figdesign(2,1,'type','usletter','orient','landscape');
-    axes(ax(1))
-    hold on;
-    h1 = plot(group1,'color',[1 0 0 .1]);
-    h2 = plot(group2,'color',[0 0 1 .1]);
-    legend([h1(1), h2(1)], 'Group1', ' Group2')
 
-    axes(ax(2))
-    [cons_all,sig_regions]=consecutive_runs(sigbins_all);
-    [cons_nan,nan_regions]=consecutive_runs(isnan(p_values));
-    hold on;
     xvals = 1:length(p_adj);
 
+    axes(ax(1));
+    hold on;
+    h1 = plot(xvals, group1, 'color', [1 0 0 .1]);
+    h2 = plot(xvals, group2, 'color', [0 0 1 .1]);
+    legend([h1(1), h2(1)], 'Group1', 'Group2')
+    ylabel('Raw data');
+
+    axes(ax(2));
+    hold on;
+    [cons_all, sig_regions] = consecutive_runs(sigbins_all);
+    [cons_nan, nan_regions] = consecutive_runs(isnan(p_values));
+
     %Plot significant regions
-    yl=ylim;
+    yl = [0, max(p_adj)];
 
     %Plot regions of significance
     for ii = 1:length(cons_all)
         inds = sig_regions{ii};
-
         if ~isempty(inds)
-            h_sigregions = fill([xvals(inds(1))-.5 xvals(inds(1))-.5 xvals(inds(end))+.5 xvals(inds(end))+.5],[yl(1) yl(2) yl(2) yl(1)],'g','edgecolor','none');
+            xidx_start = max(0, inds(1)-1);
+            xidx_end = min(length(xvals), inds(end));
+            h_sigregions = fill([xvals(xidx_start) xvals(xidx_start) xvals(xidx_end) xvals(xidx_end)],...
+                [yl(1) yl(2) yl(2) yl(1)], 'g','edgecolor','none');
         end
     end
     uistack(h_sigregions,'bottom');
 
     for ii = 1:length(cons_nan)
         inds = nan_regions{ii};
-
         if ~isempty(inds)
-            h_nanregions = fill([xvals(inds(1))-.5 xvals(inds(1))-.5 xvals(inds(end))+.5 xvals(inds(end))+.5],[yl(1) yl(2) yl(2) yl(1)],'r','edgecolor','none');
+            xidx_start = max(0, inds(1)-1);
+            xidx_end = min(length(xvals), inds(end));
+            h_nanregions = fill([xvals(xidx_start) xvals(xidx_start) xvals(xidx_end) xvals(xidx_end)],...
+                [yl(1) yl(2) yl(2) yl(1)], 'r','edgecolor','none');
         end
     end
 
@@ -192,23 +163,26 @@ if ploton
     end
 
     %Plot adjusted pvalues and threshold line
-    h_pasj = plot(xvals, p_adj,'linewidth',2,'color','b');
+    h_pasj = plot(xvals, p_adj, 'linewidth', 2, 'color', 'b');
+    h_threshold = yline(FDR, '--k', 'LineWidth', 2);
     axis tight;
-    h_threshold = hline(FDR,'color','k','linestyle','--');
 
     if isempty(h_sigregions)
-        legend([h_pasj, h_threshold],{'Adjusted p-values','Threshold'});
+        legend([h_pasj, h_threshold], {'Adjusted p-values','Threshold'}, 'Location', 'best');
     else
         if ~isempty(h_nanregions)
-            legend([h_pasj, h_threshold, h_sigregions(1), h_nanregions(1)],{'Adjusted p-values','Threshold','Significant Regions','No Data Regions'});
+            legend([h_pasj, h_threshold, h_sigregions(1), h_nanregions(1)], {'Adjusted p-values','Threshold','Significant Regions','No Data Regions'}, 'Location', 'best');
         else
-            legend([h_pasj, h_threshold, h_sigregions(1)],{'Adjusted p-values','Threshold','Significant Regions'});
+            legend([h_pasj, h_threshold, h_sigregions(1)], {'Adjusted p-values','Threshold','Significant Regions'}, 'Location', 'best');
         end
     end
 
     xlabel('Bin Number');
     ylabel('Adjusted p-value');
 
+    linkaxes(ax, 'x')
+
+    % Add subplot title
     if paired
         pstring = 'Paired';
     else
@@ -223,12 +197,13 @@ if ploton
 
     mstring = [upper(method(1)) method(2:end)]; %#ok<FNCOLND>
 
-    suptitle([mstring ' ' pstring ' ' npstring ' Test with FDR of ' num2str(FDR)])
+    t = suptitle([mstring ' ' pstring ' ' npstring ' Test with FDR of ' num2str(FDR)]);
+    t.FontSize = 20;
 end
 end
 
 
-function demo_func(FDR,paired, nonparam, method)
+function demo_func(FDR, paired, nonparam, method)
 %Define dataset
 N1 = 200;
 N2 = 200;
@@ -250,17 +225,17 @@ x=linspace(-5,5,T)';
 %Generate data
 for ii = 1:N
     if ii<=N1
-        data1 = smooth(f1(x)+randn(size(x))*.25)+1;
+        data1 = smooth(f1(x)+randn(size(x))*.25) + 1;
         data1(end-10:end) = nan;
         g1(:,ii) = data1;
     else
-        data2 = smooth(f2(x)+randn(size(x))*.25)+1;
+        data2 = smooth(f2(x)+randn(size(x))*.25) + 1;
         data2(end-3:end) = nan;
         g2(:,ii-N1) = data2;
     end
 end
 
-FDR_1D(g1,g2, 'FDR',FDR,'method',method,'paired', paired,'nonparam',nonparam);
+FDR_1D(g1,g2,'FDR',FDR,'method',method,'paired',paired,'nonparam',nonparam);
 end
 
 

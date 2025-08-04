@@ -19,9 +19,7 @@ function [sigbins, acceptance_bounds, true_stat] = gpermtest2(varargin)
 %   Example:
 %      gpermtest2(); %RUNS DEMO
 %
-%   Copyright 2024 Michael J. Prerau, Ph.D.
-%
-%   Last modified 12/10/2024
+%   Copyright 2024 Michael J. Prerau Laboratory. - http://www.sleepEEG.org
 %********************************************************************
 
 %Call the examples for no input
@@ -42,20 +40,20 @@ addOptional(p,'alpha_level',0.05,@(x)validateattributes(x,{'numeric'},{'real','f
 addOptional(p,'statfcn',@(x)mean(x,2,'omitnan'),@(x)isa(x, 'function_handle'));
 addOptional(p,'iterations',10000,@(x)validateattributes(x,{'numeric'},{'real','finite','positive','integer','scalar'}));
 addOptional(p,'ploton',true,@(x)validateattributes(x, {'logical', 'numeric'}, {'binary'}));
-
 parse(p,varargin{:});
 
 input_arguments = struct2cell(p.Results); %#ok<NASGU>
 input_flags = fieldnames(p.Results);
 eval(['[', sprintf('%s ', input_flags{:}), '] = deal(input_arguments{:});']);
 
+%% Global permutation testing
 %Get group sizes
-[R,C,N1] = size(group1);
-[R2,C2,N2] = size(group2);
+[R, C, N1] = size(group1);
+[R2, C2, N2] = size(group2);
 
 %Check that they are the same size and are valid
 assert(R == R2 && C == C2,'Group dims must be the same');
-assert(any(isfinite(group1),'all') && any(isfinite(group2),'all'), 'Groups must have valid numeric data')
+assert(any(isfinite(group1),'all') && any(isfinite(group2),'all'), 'Groups must have at least one valid numeric data')
 
 %Reshape to linear
 g1_redim = reshape(group1,size(group1,1)*size(group1,2),size(group1,3));
@@ -65,49 +63,52 @@ g2_redim = reshape(group2,size(group2,1)*size(group2,2),size(group2,3));
 [linear_sigbins, ~, linear_bounds, linear_true_stat] = gpermtest(g1_redim, g2_redim, alpha_level, statfcn, iterations, false);
 
 %Reshape output
-sigbins = reshape(linear_sigbins, R,C);
-acceptance_bounds = reshape(linear_bounds, R,C);
+sigbins = reshape(linear_sigbins, R, C);
+acceptance_bounds = reshape(linear_bounds, R, C);
+true_stat = reshape(linear_true_stat, R, C);
 
-true_stat = reshape(linear_true_stat, R,C);
-
+%% Plot results
 if ploton
     % should mean change to statfnc? But would have to deal with dims
     g1_mean = mean(reshape(g1_redim, R, C, N1),3,'omitnan');
     g2_mean = mean(reshape(g2_redim, R, C, N2),3,'omitnan');
+
     figure
     ax = figdesign(1,3,'type','usletter','orient','landscape');
-
     linkaxes(ax);
     linkcaxes(ax(1:2));
     
     axes(ax(1))
     imagesc(g1_mean)
     axis xy;
+    axis tight;
+    title('Group 1')
     cx = climscale;
     colormap(ax(1),gouldian);
-    title('Group 1')
 
     axes(ax(2))
     imagesc(g2_mean)
     axis xy;
+    axis tight;
+    title('Group 2')
     clim(cx);
     colormap(ax(2),gouldian);
-    title('Group 2')
 
     axes(ax(3))
-    hold on
     imagesc(g1_mean - g2_mean);
-    
+    axis xy;
+    axis tight;
+    title('Group 1 - Group 2')
+    hold on
+    %Plot significant regions as a contour
+    if any(sigbins,'all')
+        [~,h_sigregions] = contour(sigbins,1,'color','k','linewidth',1.5);
+        legend(h_sigregions,'Significant Regions');
+    end
     cx = climscale;
     clim(max(abs(cx))*[-1 1]);
     colormap(ax(3),redblue_equalized);
     colorbar
-    if any(sigbins,'all')
-        [~,h_sigregions] = contour(sigbins,1,'color','k', 'LineWidth', 1.5);
-        legend(h_sigregions,'Significant Regions');
-    end
-    axis tight;
-    title('Group 1 - Group 2')
 end
 end
 
@@ -121,8 +122,8 @@ N = N1 + N2;
 %Set peaks resolution
 T = 30;
 
-group1 = zeros(T,T,N1);
-group2 = zeros(T,T,N2);
+g1 = zeros(T,T,N1);
+g2 = zeros(T,T,N2);
 
 %Create functions
 f1 = @(x)peaks(x)*rand*10 + randn(T)*5+50;
@@ -133,12 +134,13 @@ for ii = 1:N
     if ii<=N1
         data = f1(T);
         data(:,end-6:end) = nan;
-        group1(:,:,ii) = data;
+        g1(:,:,ii) = data;
     else
         data = f2(T);
         data(:,end-2:end) = nan;
-        group2(:,:,ii-N1) = data;
+        g2(:,:,ii-N1) = data;
     end
 end
-gpermtest2(group1, group2);
+
+gpermtest2(g1,g2);
 end

@@ -46,16 +46,13 @@ if nargin == 0
 end
 
 p = inputParser;
-
 addRequired(p,'group1', @(x)validateattributes(x,{'numeric'},{'nonempty','2d'}));
 addRequired(p,'group2', @(x)validateattributes(x,{'numeric'},{'nonempty','2d'}));
-
 addOptional(p,'FDR', 0.1, @(x)validateattributes(x,{'numeric'},{'real','finite','positive','scalar','<=',1}));
 addOptional(p,'method', 'dependent', @(x) any(validatestring(x, {'dependent','independent'})));
 addOptional(p,'paired', false, @(x) validateattributes(x, {'logical', 'numeric'}, {'binary'}));
 addOptional(p,'nonparam', true, @(x) validateattributes(x, {'logical', 'numeric'}, {'binary'}));
 addOptional(p,'ploton', true, @(x) validateattributes(x, {'logical', 'numeric'}, {'binary'}));
-
 parse(p,varargin{:});
 
 input_arguments = struct2cell(p.Results); %#ok<NASGU> %#OK
@@ -126,7 +123,7 @@ if ploton
     h1 = plot(xvals, group1, 'color', [1 0 0 .1]);
     h2 = plot(xvals, group2, 'color', [0 0 1 .1]);
     legend([h1(1), h2(1)], 'Group1', 'Group2')
-    ylabel('Raw data');
+    ylabel('Raw Data');
 
     axes(ax(2));
     hold on;
@@ -165,7 +162,6 @@ if ploton
     %Plot adjusted pvalues and threshold line
     h_pasj = plot(xvals, p_adj, 'linewidth', 2, 'color', 'b');
     h_threshold = yline(FDR, '--k', 'LineWidth', 2);
-    axis tight;
 
     if isempty(h_sigregions)
         legend([h_pasj, h_threshold], {'Adjusted p-values','Threshold'}, 'Location', 'best');
@@ -181,6 +177,7 @@ if ploton
     ylabel('Adjusted p-value');
 
     linkaxes(ax, 'x')
+    axis tight;
 
     % Add subplot title
     if paired

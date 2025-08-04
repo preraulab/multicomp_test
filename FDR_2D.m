@@ -49,16 +49,13 @@ if nargin == 0
 end
 
 p = inputParser;
-
 addRequired(p,'group1', @(x)validateattributes(x,{'numeric'},{'nonempty','ndims',3}));
 addRequired(p,'group2', @(x)validateattributes(x,{'numeric'},{'nonempty','ndims',3}));
-
 addOptional(p,'FDR', 0.1, @(x)validateattributes(x,{'numeric'},{'real','finite','positive','scalar','<=',1}));
 addOptional(p,'method', 'dependent', @(x) any(validatestring(x, {'dependent','independent'})));
 addOptional(p,'paired', false, @(x) validateattributes(x, {'logical', 'numeric'}, {'binary'}));
 addOptional(p,'nonparam', true, @(x) validateattributes(x, {'logical', 'numeric'}, {'binary'}));
 addOptional(p,'ploton', true, @(x) validateattributes(x, {'logical', 'numeric'}, {'binary'}));
-
 parse(p,varargin{:});
 
 input_arguments = struct2cell(p.Results); %#ok<NASGU>
@@ -118,35 +115,37 @@ if ploton
 
     axes(ax(3))
     imagesc(g1_mean - g2_mean);
+    axis xy;
+    axis tight;
+    title('Group 1 - Group 2')
     hold on
+    %Cross out nan regions
     [r,c] = find(isnan(p_adj));
     if ~isempty(r)
         plot(c,r,'x')
     end
-    axis xy;
-    axis tight;
-    title('Group 1 - Group 2')
+    %Plot significant regions as a contour
+    if(any(sigbins(:)))
+        [~,hc] = contour(sigbins,[1 1],'color','k','linewidth',1.5);
+        legend(hc, 'Significant Regions')
+    end
     cx = climscale;
     clim(max(abs(cx))*[-1 1]);
     colormap(ax(3),redblue_equalized);
     pos = ax(3).Position;
     colorbar(ax(3));
     ax(3).Position = pos;
-    %Plot significant regions as a contour
-    if(any(sigbins(:)))
-        [~,hc] = contour(sigbins,[1 1],'color','k','linewidth',1.5);
-        legend(hc, 'Regions of Significance')
-    end
 
     axes(ax(4))
     imagesc(p_adj)
-    hold on
-    if ~isempty(r)
-        plot(c,r,'x')
-    end
     axis xy
     axis tight;
     title('Adjusted p-values')
+    hold on
+    %Cross out nan regions
+    if ~isempty(r)
+        plot(c,r,'x')
+    end
     clim([0 FDR*2])
     colormap(ax(4),'parula');
     pos = ax(4).Position;

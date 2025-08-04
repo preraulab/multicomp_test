@@ -20,9 +20,7 @@ function [sigbins_all, sig_regions, acceptance_bounds, true_stat] = gpermtest(va
 %   Example:
 %      gpermtest(); %RUNS DEMO
 %
-%   Copyright 2024 Michael J. Prerau, Ph.D.
-%
-%   Last modified 12/10/2024
+%   Copyright 2024 Michael J. Prerau Laboratory. - http://www.sleepEEG.org
 %********************************************************************
 
 %Call the examples for no input
@@ -43,13 +41,13 @@ addOptional(p,'alpha_level',0.05,@(x)validateattributes(x,{'numeric'},{'real','f
 addOptional(p,'statfcn',@(x)mean(x,2,'omitnan'),@(x)isa(x, 'function_handle'));
 addOptional(p,'iterations',10000,@(x)validateattributes(x,{'numeric'},{'real','finite','positive','integer','scalar'}));
 addOptional(p,'ploton',true,@(x)validateattributes(x, {'logical', 'numeric'}, {'binary'}));
-
 parse(p,varargin{:});
 
 input_arguments = struct2cell(p.Results); %#ok<NASGU>
 input_flags = fieldnames(p.Results);
 eval(['[', sprintf('%s ', input_flags{:}), '] = deal(input_arguments{:});']);
 
+%% Global permutation testing
 %Remove nan dimensions
 p1 = group1(:,any(~isnan(group1))); %#ok<*USENS>
 p2 = group2(:,any(~isnan(group2)));
@@ -57,15 +55,14 @@ p2 = group2(:,any(~isnan(group2)));
 [R, ~] = size(p1);
 
 %Combine both groups
-all=[p1 p2];
-
-Np1=size(p1,2);
+all = [p1 p2];
+Np1 = size(p1,2);
 
 %The difference in mean activity between the two scenarios
-true_stat=statfcn(p1)-statfcn(p2); %#ok<NODEF>
+true_stat = statfcn(p1) - statfcn(p2); %#ok<NODEF>
 
 %Generate null distribution
-null_mat=zeros(R,iterations);
+null_mat = zeros(R,iterations);
 
 disp(['Computing test with ' num2str(iterations) ' iterations at alpha level ' num2str(alpha_level) '...']);
 
@@ -74,29 +71,29 @@ statfcn = statfcn; %#ok<ASGSL>
 disp('Generating null distribution...');
 parfor ii=1:iterations
     %Get a random permutation of the labels
-    inds=randperm(size(all,2));
+    inds = randperm(size(all,2));
 
     %Indices for new pseudo-groups
-    inds1=inds(1:Np1);
-    inds2=inds((Np1 + 1):end);
+    inds1 = inds(1:Np1);
+    inds2 = inds((Np1 + 1):end);
 
     %Compute the stat and take absolute value
-    null_mat(:,ii)=abs((statfcn(all(:,inds1))-statfcn(all(:,inds2)))); %#ok<PFBNS>
+    null_mat(:,ii) = abs((statfcn(all(:,inds1)) - statfcn(all(:,inds2)))); %#ok<PFBNS>
 end
 
 %Sort the trials for ease of computing the pointwise N-tile
-sorted_null=sort(null_mat,2);
+sorted_null = sort(null_mat,2);
 
 %Set initial bounds at highest %ile
 cutoff_ind = iterations;
 
 % Number of individual trials falling outside the global bounds
-numout=0;
+numout = 0;
 
 %Compute the citerion for the number out
 out_crit = ceil(alpha_level*iterations);
 
-gbounds=sorted_null(:,end);
+gbounds = sorted_null(:,end);
 
 h_sigregions = waitbar(0,'Computing bounds...');
 
@@ -106,10 +103,10 @@ disp(['Out crit: ' num2str(out_crit) ' out of ' num2str(iterations) ' = ' num2st
 if out_crit<iterations && out_crit>0
     while numout<out_crit && cutoff_ind>0
         %Calculate the global bounds
-        gbounds=sorted_null(:,cutoff_ind)+1e-5;
+        gbounds = sorted_null(:,cutoff_ind)+1e-5;
 
         %Check the number out of bounds
-        numout=sum(any(null_mat>=gbounds & ~isnan(null_mat)));
+        numout = sum(any(null_mat>=gbounds & ~isnan(null_mat)));
 
         %Shrink the bounds
         cutoff_ind = cutoff_ind - 1;
@@ -138,40 +135,37 @@ hi = gbounds;
 % lo = -gbounds;
 
 %Find the significant bins
-sigbins_all=(abs(true_stat)>=hi);% | true_stat<=lo);
-acceptance_bounds=hi;%[hi,lo];
-[cons_all,sig_regions]=consecutive_runs(sigbins_all);
+sigbins_all = (abs(true_stat)>=hi);% | true_stat<=lo);
+acceptance_bounds = hi;%[hi,lo];
+[cons_all, sig_regions] = consecutive_runs(sigbins_all);
 
-%Plot the results
+%% Plot results
 if ploton
     figure
     ax = figdesign(2,1,'type','usletter','orient','landscape');
-    axes(ax(1))
-    hold on;
-    h1 = plot(group1,'color',[1 0 0 .1]);
-    h2 = plot(group2,'color',[0 0 1 .1]);
-    legend([h1(1), h2(1)], 'Group1', ' Group2')
 
     xvals = 1:length(sigbins_all);
 
-    %     figure('units','normalized','position',[0 0 1 1],'color','w');
-    %     %Plot raw data if not too big
-    %     if iterations<500
-    %         plot(xvals, null_mat','color',[.8 .8 .8]);
-    %     end
-    axes(ax(2))
-    %Plot bounds and stat
+    axes(ax(1))
     hold on;
-    h_bounds = plot(xvals,hi,'r','linewidth',2);
-    h_stat = plot(xvals, abs(true_stat),'k','linewidth',2);
+    h1 = plot(xvals, group1, 'color', [1 0 0 .1]);
+    h2 = plot(xvals, group2, 'color', [0 0 1 .1]);
+    legend([h1(1), h2(1)], 'Group1', 'Group2')
+    ylabel('Raw Data');
+
+    axes(ax(2))
+    hold on;
+    h_bounds = plot(xvals, hi, 'r', 'linewidth', 2);
+    h_stat = plot(xvals, abs(true_stat), 'k', 'linewidth', 2);
 
     %Plot significant regions
-    yl=ylim;
+    yl = ylim;
     h_sigregions = [];
 
     for ii=1:length(cons_all)
         inds = sig_regions{ii};
-        h_sigregions(ii) = fill(xvals([inds(1) inds(1) inds(end) inds(end)]),[yl(1) yl(2) yl(2) yl(1)],'g','edgecolor','none'); %#ok<AGROW>
+        h_sigregions(ii) = fill(xvals([inds(1) inds(1) inds(end) inds(end)]),...
+            [yl(1) yl(2) yl(2) yl(1)],'g','edgecolor','none'); %#ok<AGROW>
         uistack(h_sigregions,'bottom');
     end
 
@@ -185,7 +179,12 @@ if ploton
     xlabel('Bin Number');
     ylabel('Stat Value');
 
+    linkaxes(ax, 'x')
     axis tight;
+
+    % Add subplot title
+    t = suptitle('Global Permutation Testing Significant Segments');
+    t.FontSize = 20;
 end
 end
 
@@ -221,5 +220,6 @@ for ii = 1:N
         g2(:,ii-N1) = data2;
     end
 end
-gpermtest(g1, g2);
+
+gpermtest(g1,g2);
 end

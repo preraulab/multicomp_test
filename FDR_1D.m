@@ -133,7 +133,6 @@ if ploton
     %Plot significant regions
     yl = [0, max(p_adj)];
 
-    %Plot regions of significance
     for ii = 1:length(cons_all)
         inds = sig_regions{ii};
         if ~isempty(inds)
@@ -143,7 +142,6 @@ if ploton
                 [yl(1) yl(2) yl(2) yl(1)], 'g','edgecolor','none');
         end
     end
-    uistack(h_sigregions,'bottom');
 
     for ii = 1:length(cons_nan)
         inds = nan_regions{ii};
@@ -155,12 +153,8 @@ if ploton
         end
     end
 
-    if ~isempty(h_nanregions)
-        uistack(h_nanregions,'bottom');
-    end
-
     %Plot adjusted pvalues and threshold line
-    h_pasj = plot(xvals, p_adj, 'linewidth', 2, 'color', 'b');
+    h_pasj = plot(xvals, p_adj, 'b', 'LineWidth', 2);
     h_threshold = yline(FDR, '--k', 'LineWidth', 2);
 
     if isempty(h_sigregions)

@@ -73,8 +73,10 @@ if ploton
     g1_mean = mean(reshape(g1_redim, R, C, N1),3,'omitnan');
     g2_mean = mean(reshape(g2_redim, R, C, N2),3,'omitnan');
 
-    figure
-    ax = figdesign(1,3,'type','usletter','orient','landscape');
+    f = figure;
+    ax = figdesign(1,3,'type','usletter','orient','landscape','margins',[.05 .1 .05 .05 .025]);
+    set(f, 'Position', [0.15 0.30 0.70 0.40])
+
     linkaxes(ax);
     linkcaxes(ax(1:2));
     
@@ -103,7 +105,7 @@ if ploton
     %Plot significant regions as a contour
     if any(sigbins,'all')
         [~,h_sigregions] = contour(sigbins,1,'color','k','linewidth',1.5);
-        legend(h_sigregions,'Significant Regions');
+        legend(h_sigregions, 'Significant Regions');
     end
     cx = climscale;
     clim(max(abs(cx))*[-1 1]);

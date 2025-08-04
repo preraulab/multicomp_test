@@ -19,18 +19,18 @@ function [sigbins_all, tstat_obs, thresh, perm_tmax] = permtest(varargin)
 %   Example:
 %       permtest(); %RUNS DEMO
 %
-%   Copyright 2024 Michael J. Prerau, Ph.D.
-%
-%   Last modified 12/10/2024
-%********************************************************************
-
-%Call the examples for no input
-if nargin==0
-    demo;
-    return;
-end
+%   Copyright 2024 Michael J. Prerau Laboratory. - http://www.sleepEEG.org
+%**********************************************************************
 
 %%
+%Call the demo function if no input
+if nargin==0
+    %Set a fixed random seed so both demos have the same data
+    seed = 2023;
+    rng(seed);
+    demo();
+    return;
+end
 
 %Parse inputs to extract just the xy axis locations
 p = inputParser;
@@ -39,7 +39,6 @@ addRequired(p,'group2',@(x)validateattributes(x,{'numeric'},{'nonempty','2d'}));
 addOptional(p,'alpha_level',0.05,@(x)validateattributes(x,{'numeric'},{'real','finite','positive','scalar','<=',1}));
 addOptional(p,'iterations',10000,@(x)validateattributes(x,{'numeric'},{'real','finite','positive','integer','scalar'}));
 addOptional(p,'ploton',true,@(x)validateattributes(x, {'logical', 'numeric'}, {'binary'}));
-
 parse(p,varargin{:});
 
 input_arguments = struct2cell(p.Results); %#ok<NASGU>
@@ -48,29 +47,30 @@ eval(['[', sprintf('%s ', input_flags{:}), '] = deal(input_arguments{:});']);
 
 assert(any(isfinite(group1),'all') && any(isfinite(group2),'all'), 'Groups must have valid numeric data') %#ok<USENS>
 
+%% Permutation testing
 %Remove nan dimensions
-p1 = group1(:,any(~isnan(group1)));
-p2 = group2(:,any(~isnan(group2)));
+p1 = group1(:, any(~isnan(group1)));
+p2 = group2(:, any(~isnan(group2)));
 
 %Combine both groups
-all=[p1 p2];
-Np1=size(p1,2);
+all = [p1 p2];
+Np1 = size(p1, 2);
 
 %Allocat max tstat array
-perm_tmax = zeros(1,iterations);
+perm_tmax = zeros(1, iterations);
 
 disp(['Computing test with ' num2str(iterations) ' iterations at alpha level ' num2str(alpha_level) '...']);
 
 %Generate null distribution
 disp('Generating null distribution...');
-parfor ii=1:iterations
+parfor ii = 1:iterations
     %Get a random permutation of the labels
     inds=randperm(size(all,2));
-    
+
     %Indices for new pseudo-groups
     inds1=inds(1:Np1);
     inds2=inds((Np1 + 1):end);
-    
+
     %Compute the ttest
     [~,~,~,STATS] = ttest2(all(:,inds1)',all(:,inds2)');
     perm_tmax(ii) = max(abs(STATS.tstat));
@@ -84,47 +84,47 @@ thresh = prctile(perm_tmax,(1-alpha_level)*100);
 
 %Find the significant bins
 sigbins_all= abs(tstat_obs)>thresh;
-[cons_all,sig_regions]=consecutive(sigbins_all);
+[cons_all, sig_regions] = consecutive_runs(sigbins_all);
 
-%Plot the results
+%% Plot results
 if ploton
     figure('units','normalized','position',[0 0 1 1],'color','w');
-    
+
     subplot(211)
     histogram(perm_tmax)
-    h_thresh = vline(thresh,'color','k','linestyle','--');
+    h_thresh = xline(thresh, 'k--', 'LineWidth', 2);
     legend(h_thresh,'Threshold');
     xlabel('t-stat');
     ylabel('Count');
-    
+
     xvals = 1:length(sigbins_all);
-    
+
     subplot(212)
     hold on;
-    
+
     %Plot significant regions
-    yl=[min(tstat_obs) max(tstat_obs)];
+    yl = [min(tstat_obs) max(tstat_obs)];
     h_sigregions = [];
-    
+
     for ii=1:length(cons_all)
         inds=sig_regions{ii};
-        h_sigregions(ii) = fill(xvals([inds(1) inds(1) inds(end) inds(end)]),[yl(1) yl(2) yl(2) yl(1)],'g','edgecolor','none'); %#ok<AGROW>
+        h_sigregions(ii) = fill(xvals([inds(1) inds(1) inds(end) inds(end)]),...
+            [yl(1) yl(2) yl(2) yl(1)],'g','edgecolor','none'); %#ok<AGROW>
     end
-    
-    h_stat = plot(xvals, tstat_obs,'b','linewidth',2);
-    h_threshold = hline(thresh,'color','k','linestyle','--');
-    xlabel('Bin Number');
-    ylabel('Stat Value');
-    
-    axis tight;
-    
-    %Generate legend
+
+    h_stat = plot(xvals, tstat_obs, 'b', 'LineWidth', 2);
+    h_threshold = yline(thresh, 'k--', 'LineWidth', 2);
+
     if isempty(h_sigregions)
         legend([h_threshold, h_stat],{'Threshold','Observed Statistic'});
     else
         legend([h_threshold, h_stat, h_sigregions(1)],{'Threshold','Observed Statistic','Significant Regions'});
     end
-    
+
+    xlabel('Bin Number');
+    ylabel('Stat Value');
+
+    axis tight;
 end
 end
 
@@ -157,5 +157,5 @@ for ii = 1:N
     end
 end
 
-permtest(g1, g2);
+permtest(g1,g2);
 end

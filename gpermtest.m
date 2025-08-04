@@ -49,14 +49,14 @@ eval(['[', sprintf('%s ', input_flags{:}), '] = deal(input_arguments{:});']);
 
 %% Global permutation testing
 %Remove nan dimensions
-p1 = group1(:,any(~isnan(group1))); %#ok<*USENS>
-p2 = group2(:,any(~isnan(group2)));
+p1 = group1(:, any(~isnan(group1))); %#ok<*USENS>
+p2 = group2(:, any(~isnan(group2)));
 
 [R, ~] = size(p1);
 
 %Combine both groups
 all = [p1 p2];
-Np1 = size(p1,2);
+Np1 = size(p1, 2);
 
 %The difference in mean activity between the two scenarios
 true_stat = statfcn(p1) - statfcn(p2); %#ok<NODEF>
@@ -69,7 +69,7 @@ disp(['Computing test with ' num2str(iterations) ' iterations at alpha level ' n
 %Generate null distribution
 statfcn = statfcn; %#ok<ASGSL>
 disp('Generating null distribution...');
-parfor ii=1:iterations
+parfor ii = 1:iterations
     %Get a random permutation of the labels
     inds = randperm(size(all,2));
 
@@ -135,8 +135,8 @@ hi = gbounds;
 % lo = -gbounds;
 
 %Find the significant bins
-sigbins_all = (abs(true_stat)>=hi);% | true_stat<=lo);
-acceptance_bounds = hi;%[hi,lo];
+sigbins_all = (abs(true_stat)>=hi); % | true_stat<=lo);
+acceptance_bounds = hi; %[hi,lo];
 [cons_all, sig_regions] = consecutive_runs(sigbins_all);
 
 %% Plot results
@@ -155,21 +155,19 @@ if ploton
 
     axes(ax(2))
     hold on;
-    h_bounds = plot(xvals, hi, 'r', 'linewidth', 2);
-    h_stat = plot(xvals, abs(true_stat), 'k', 'linewidth', 2);
 
     %Plot significant regions
-    yl = ylim;
-    h_sigregions = [];
+    yl = [0, max(abs(true_stat))];
 
     for ii=1:length(cons_all)
         inds = sig_regions{ii};
-        h_sigregions(ii) = fill(xvals([inds(1) inds(1) inds(end) inds(end)]),...
-            [yl(1) yl(2) yl(2) yl(1)],'g','edgecolor','none'); %#ok<AGROW>
-        uistack(h_sigregions,'bottom');
+        h_sigregions = fill(xvals([inds(1) inds(1) inds(end) inds(end)]),...
+            [yl(1) yl(2) yl(2) yl(1)],'g','edgecolor','none');
     end
 
-    %Generate legend
+    h_bounds = plot(xvals, hi, 'r', 'LineWidth', 2);
+    h_stat = plot(xvals, abs(true_stat), 'k', 'LineWidth', 2);
+
     if isempty(h_sigregions)
         legend([h_bounds, h_stat],{'Global Bounds','Observed Statistic'});
     else

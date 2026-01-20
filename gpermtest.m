@@ -168,8 +168,9 @@ if ploton
     h_bounds = plot(xvals, hi, 'r', 'LineWidth', 2);
     h_stat = plot(xvals, abs(true_stat), 'k', 'LineWidth', 2);
 
-    if isempty(h_sigregions)
+    if ~ishandle(h_sigregions)
         legend([h_bounds, h_stat],{'Global Bounds','Observed Statistic'});
+        title('No Significant Regions Found')
     else
         legend([h_bounds, h_stat, h_sigregions(1)],{'Global Bounds','Observed Statistic','Significant Regions'});
     end

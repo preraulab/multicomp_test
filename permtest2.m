@@ -75,7 +75,7 @@ if ploton
     hold on
     cx = climscale;
     clim(max(abs(cx))*[-1 1]);
-    colormap(redblue_equalized);
+    colormap(flipud(redblue_equalized));
     colorbar
     %Plot significant regions as a contour
     if any(sigbins,'all')

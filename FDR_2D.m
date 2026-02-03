@@ -131,7 +131,7 @@ if ploton
     end
     cx = climscale;
     clim(max(abs(cx))*[-1 1]);
-    colormap(ax(3),redblue_equalized);
+    colormap(ax(3),flipud(redblue_equalized));
     pos = ax(3).Position;
     colorbar(ax(3));
     ax(3).Position = pos;

@@ -109,7 +109,7 @@ if ploton
     end
     cx = climscale;
     clim(max(abs(cx))*[-1 1]);
-    colormap(ax(3),redblue_equalized);
+    colormap(ax(3),flipud(redblue_equalized));
     colorbar
 end
 end

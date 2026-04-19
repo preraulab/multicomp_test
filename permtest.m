@@ -41,29 +41,27 @@ addOptional(p,'iterations',10000,@(x)validateattributes(x,{'numeric'},{'real','f
 addOptional(p,'ploton',true,@(x)validateattributes(x, {'logical', 'numeric'}, {'binary'}));
 parse(p,varargin{:});
 
-input_arguments = struct2cell(p.Results); %#ok<NASGU>
-input_flags = fieldnames(p.Results);
-eval(['[', sprintf('%s ', input_flags{:}), '] = deal(input_arguments{:});']);
+opts = p.Results;
 
-assert(any(isfinite(group1),'all') && any(isfinite(group2),'all'), 'Groups must have valid numeric data') %#ok<USENS>
+assert(any(isfinite(opts.group1),'all') && any(isfinite(opts.group2),'all'), 'Groups must have valid numeric data') %#ok<USENS>
 
 %% Permutation testing
 %Remove nan dimensions
-p1 = group1(:, any(~isnan(group1)));
-p2 = group2(:, any(~isnan(group2)));
+p1 = opts.group1(:, any(~isnan(opts.group1)));
+p2 = opts.group2(:, any(~isnan(opts.group2)));
 
 %Combine both groups
 all = [p1 p2];
 Np1 = size(p1, 2);
 
 %Allocat max tstat array
-perm_tmax = zeros(1, iterations);
+perm_tmax = zeros(1, opts.iterations);
 
-disp(['Computing test with ' num2str(iterations) ' iterations at alpha level ' num2str(alpha_level) '...']);
+disp(['Computing test with ' num2str(opts.iterations) ' iterations at alpha level ' num2str(opts.alpha_level) '...']);
 
 %Generate null distribution
 disp('Generating null distribution...');
-parfor ii = 1:iterations
+parfor ii = 1:opts.iterations
     %Get a random permutation of the labels
     inds=randperm(size(all,2));
 
@@ -80,14 +78,14 @@ end
 [~,~,~,STATS_obs] = ttest2(p1',p2');
 tstat_obs = STATS_obs.tstat;
 
-thresh = prctile(perm_tmax,(1-alpha_level)*100);
+thresh = prctile(perm_tmax,(1-opts.alpha_level)*100);
 
 %Find the significant bins
 sigbins_all= abs(tstat_obs)>thresh;
 [cons_all, sig_regions] = consecutive_runs(sigbins_all);
 
 %% Plot results
-if ploton
+if opts.ploton
     figure('units','normalized','position',[0 0 1 1],'color','w');
 
     subplot(211)

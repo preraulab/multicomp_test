@@ -43,14 +43,12 @@ addOptional(p,'iterations',10000,@(x)validateattributes(x,{'numeric'},{'real','f
 addOptional(p,'ploton',true,@(x)validateattributes(x, {'logical', 'numeric'}, {'binary'}));
 parse(p,varargin{:});
 
-input_arguments = struct2cell(p.Results); %#ok<NASGU>
-input_flags = fieldnames(p.Results);
-eval(['[', sprintf('%s ', input_flags{:}), '] = deal(input_arguments{:});']);
+opts = p.Results;
 
 %% Global permutation testing
 %Remove nan dimensions
-p1 = group1(:, any(~isnan(group1))); %#ok<*USENS>
-p2 = group2(:, any(~isnan(group2)));
+p1 = opts.group1(:, any(~isnan(opts.group1))); %#ok<*USENS>
+p2 = opts.group2(:, any(~isnan(opts.group2)));
 
 [R, ~] = size(p1);
 
@@ -59,17 +57,17 @@ all = [p1 p2];
 Np1 = size(p1, 2);
 
 %The difference in mean activity between the two scenarios
-true_stat = statfcn(p1) - statfcn(p2); %#ok<NODEF>
+true_stat = opts.statfcn(p1) - opts.statfcn(p2); %#ok<NODEF>
 
 %Generate null distribution
-null_mat = zeros(R,iterations);
+null_mat = zeros(R,opts.iterations);
 
-disp(['Computing test with ' num2str(iterations) ' iterations at alpha level ' num2str(alpha_level) '...']);
+disp(['Computing test with ' num2str(opts.iterations) ' iterations at alpha level ' num2str(opts.alpha_level) '...']);
 
 %Generate null distribution
-statfcn = statfcn; %#ok<ASGSL>
+opts.statfcn = opts.statfcn; %#ok<ASGSL>
 disp('Generating null distribution...');
-parfor ii = 1:iterations
+parfor ii = 1:opts.iterations
     %Get a random permutation of the labels
     inds = randperm(size(all,2));
 
@@ -78,29 +76,29 @@ parfor ii = 1:iterations
     inds2 = inds((Np1 + 1):end);
 
     %Compute the stat and take absolute value
-    null_mat(:,ii) = abs((statfcn(all(:,inds1)) - statfcn(all(:,inds2)))); %#ok<PFBNS>
+    null_mat(:,ii) = abs((opts.statfcn(all(:,inds1)) - opts.statfcn(all(:,inds2)))); %#ok<PFBNS>
 end
 
 %Sort the trials for ease of computing the pointwise N-tile
 sorted_null = sort(null_mat,2);
 
 %Set initial bounds at highest %ile
-cutoff_ind = iterations;
+cutoff_ind = opts.iterations;
 
 % Number of individual trials falling outside the global bounds
 numout = 0;
 
 %Compute the citerion for the number out
-out_crit = ceil(alpha_level*iterations);
+out_crit = ceil(opts.alpha_level*opts.iterations);
 
 gbounds = sorted_null(:,end);
 
 h_sigregions = waitbar(0,'Computing bounds...');
 
-disp(['Out crit: ' num2str(out_crit) ' out of ' num2str(iterations) ' = ' num2str(out_crit/iterations)]);
+disp(['Out crit: ' num2str(out_crit) ' out of ' num2str(opts.iterations) ' = ' num2str(out_crit/opts.iterations)]);
 
 %Shrink the bounds until the number of outside trials is %alpha
-if out_crit<iterations && out_crit>0
+if out_crit<opts.iterations && out_crit>0
     while numout<out_crit && cutoff_ind>0
         %Calculate the global bounds
         gbounds = sorted_null(:,cutoff_ind)+1e-5;
@@ -115,7 +113,7 @@ if out_crit<iterations && out_crit>0
     end
 
     close(h_sigregions);
-elseif out_crit>=iterations
+elseif out_crit>=opts.iterations
     warning('Global bounds includes all iterations. Increase iterations or reduce p-value');
     gbounds = zeros(size(sorted_null(:,1)));
 elseif out_crit == 0
@@ -123,9 +121,9 @@ elseif out_crit == 0
     gbounds = sorted_null(:,end);
 end
 
-disp(['Found bounds to exclude ' num2str(numout) ' = ' num2str(numout/iterations)]);
+disp(['Found bounds to exclude ' num2str(numout) ' = ' num2str(numout/opts.iterations)]);
 
-alpha_diff = alpha_level - (numout/iterations);
+alpha_diff = opts.alpha_level - (numout/opts.iterations);
 if abs(alpha_diff)>0.01
     warning(['Difference between alpha-level and p-value is large: ' num2str(alpha_diff) '. Results likely inaccurate. Increase iterations or de-noise data.']);
 end
@@ -140,7 +138,7 @@ acceptance_bounds = hi; %[hi,lo];
 [cons_all, sig_regions] = consecutive_runs(sigbins_all);
 
 %% Plot results
-if ploton
+if opts.ploton
     figure
     ax = figdesign(2,1,'type','usletter','orient','landscape');
 
@@ -148,8 +146,8 @@ if ploton
 
     axes(ax(1))
     hold on;
-    h1 = plot(xvals, group1, 'color', [1 0 0 .1]);
-    h2 = plot(xvals, group2, 'color', [0 0 1 .1]);
+    h1 = plot(xvals, opts.group1, 'color', [1 0 0 .1]);
+    h2 = plot(xvals, opts.group2, 'color', [0 0 1 .1]);
     legend([h1(1), h2(1)], 'Group1', 'Group2')
     ylabel('Raw Data');
 

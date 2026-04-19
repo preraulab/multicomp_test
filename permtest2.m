@@ -41,32 +41,30 @@ addOptional(p,'iterations',10000,@(x)validateattributes(x,{'numeric'},{'real','f
 addOptional(p,'ploton',true,@(x)validateattributes(x, {'logical', 'numeric'}, {'binary'}));
 parse(p,varargin{:});
 
-input_arguments = struct2cell(p.Results); %#ok<NASGU>
-input_flags = fieldnames(p.Results);
-eval(['[', sprintf('%s ', input_flags{:}), '] = deal(input_arguments{:});']);
+opts = p.Results;
 
 %% Permutation testing
 %Get group sizes
-[R, C, N1] = size(group1);
-[R2, C2, N2] = size(group2);
+[R, C, N1] = size(opts.group1);
+[R2, C2, N2] = size(opts.group2);
 
 %Check that they are the same size and are valid
 assert(R == R2 && C == C2,'Group dims must be the same');
-assert(any(isfinite(group1),'all') && any(isfinite(group2),'all'), 'Groups must have at least one valid numeric data')
+assert(any(isfinite(opts.group1),'all') && any(isfinite(opts.group2),'all'), 'Groups must have at least one valid numeric data')
 
 %Reshape to linear
-g1_redim = reshape(group1,size(group1,1)*size(group1,2),size(group1,3));
-g2_redim = reshape(group2,size(group2,1)*size(group2,2),size(group2,3));
+g1_redim = reshape(opts.group1,size(opts.group1,1)*size(opts.group1,2),size(opts.group1,3));
+g2_redim = reshape(opts.group2,size(opts.group2,1)*size(opts.group2,2),size(opts.group2,3));
 
 %Compute linear perm test with global bounds
-[linear_sigbins, linear_tstat_obs, thresh, perm_tmax] = permtest(g1_redim, g2_redim, alpha_level, iterations, false);
+[linear_sigbins, linear_tstat_obs, thresh, perm_tmax] = permtest(g1_redim, g2_redim, opts.alpha_level, opts.iterations, false);
 
 %Reshape output
 sigbins = reshape(linear_sigbins, R, C);
 tstat_obs = reshape(linear_tstat_obs, R, C);
 
 %% Plot results
-if ploton
+if opts.ploton
     f = figure;
     imagesc(mean(reshape(g1_redim, R, C, N1),3,'omitnan') - mean(reshape(g2_redim, R, C, N2),3,'omitnan'));
     set(f, 'Position', [500, 500, 1000, 800])

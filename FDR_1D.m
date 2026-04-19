@@ -55,27 +55,25 @@ addOptional(p,'nonparam', true, @(x) validateattributes(x, {'logical', 'numeric'
 addOptional(p,'ploton', true, @(x) validateattributes(x, {'logical', 'numeric'}, {'binary'}));
 parse(p,varargin{:});
 
-input_arguments = struct2cell(p.Results); %#ok<NASGU> %#OK
-input_flags = fieldnames(p.Results);
-eval(['[', sprintf('%s ', input_flags{:}), '] = deal(input_arguments{:});']);
+opts = p.Results;
 
 %Change infs to nans
-group1(isinf(group1)) = nan; %#ok<*NODEF>
-group2(isinf(group2)) = nan;
+opts.group1(isinf(opts.group1)) = nan; %#ok<*NODEF>
+opts.group2(isinf(opts.group2)) = nan;
 
 %% Generate p-values from group comparisons
-if nonparam
-    if paired
-        assert(size(group1,2) == size(group2,2),'There must be the same number of observations for a paired test.')
+if opts.nonparam
+    if opts.paired
+        assert(size(opts.group1,2) == size(opts.group2,2),'There must be the same number of observations for a paired test.')
         testfun = @signrank;
     else
         testfun = @ranksum;
     end
 
-    p_values = zeros(1, size(group1, 1));
+    p_values = zeros(1, size(opts.group1, 1));
     for ii = 1:length(p_values)
-        g1 = group1(ii, :);
-        g2 = group2(ii, :);
+        g1 = opts.group1(ii, :);
+        g2 = opts.group2(ii, :);
 
         if all(isnan(g1)) && all(isnan(g2))
             p_values(ii) = nan;
@@ -89,15 +87,15 @@ if nonparam
         end
     end
 else
-    if paired
-        [~,p_values] = ttest(group1',group2');
+    if opts.paired
+        [~,p_values] = ttest(opts.group1',opts.group2');
     else
-        [~,p_values] = ttest2(group1',group2');
+        [~,p_values] = ttest2(opts.group1',opts.group2');
     end
 end
 
 %Adjust p-value by FDR
-switch method
+switch opts.method
     case 'dependent'
         method_string = 'dep';
     case 'independent'
@@ -106,13 +104,13 @@ switch method
         error('Invalid method string')
 end
 
-[~,~,~,p_adj] = fdr_bh(p_values, FDR, method_string);
+[~,~,~,p_adj] = fdr_bh(p_values, opts.FDR, method_string);
 
 %Find the significant bins
-sigbins_all = p_adj < FDR;
+sigbins_all = p_adj < opts.FDR;
 
 %% Plot results
-if ploton
+if opts.ploton
     figure
     ax = figdesign(2,1,'type','usletter','orient','landscape');
 
@@ -120,8 +118,8 @@ if ploton
 
     axes(ax(1));
     hold on;
-    h1 = plot(xvals, group1, 'color', [1 0 0 .1]);
-    h2 = plot(xvals, group2, 'color', [0 0 1 .1]);
+    h1 = plot(xvals, opts.group1, 'color', [1 0 0 .1]);
+    h2 = plot(xvals, opts.group2, 'color', [0 0 1 .1]);
     legend([h1(1), h2(1)], 'Group1', 'Group2')
     ylabel('Raw Data');
 
@@ -155,7 +153,7 @@ if ploton
 
     %Plot adjusted pvalues and threshold line
     h_pasj = plot(xvals, p_adj, 'b', 'LineWidth', 2);
-    h_threshold = yline(FDR, '--k', 'LineWidth', 2);
+    h_threshold = yline(opts.FDR, '--k', 'LineWidth', 2);
 
     if isempty(h_sigregions)
         legend([h_pasj, h_threshold], {'Adjusted p-values','Threshold'}, 'Location', 'best');
@@ -174,21 +172,21 @@ if ploton
     axis tight;
 
     % Add subplot title
-    if paired
+    if opts.paired
         pstring = 'Paired';
     else
         pstring = 'Unpaired';
     end
 
-    if nonparam
+    if opts.nonparam
         npstring = 'Nonparametric';
     else
         npstring = 'Parametric';
     end
 
-    mstring = [upper(method(1)) method(2:end)]; %#ok<FNCOLND>
+    mstring = [upper(opts.method(1)) opts.method(2:end)]; %#ok<FNCOLND>
 
-    t = suptitle([mstring ' ' pstring ' ' npstring ' Test with FDR of ' num2str(FDR)]);
+    t = suptitle([mstring ' ' pstring ' ' npstring ' Test with FDR of ' num2str(opts.FDR)]);
     t.FontSize = 20;
 end
 end

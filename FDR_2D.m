@@ -58,25 +58,23 @@ addOptional(p,'nonparam', true, @(x) validateattributes(x, {'logical', 'numeric'
 addOptional(p,'ploton', true, @(x) validateattributes(x, {'logical', 'numeric'}, {'binary'}));
 parse(p,varargin{:});
 
-input_arguments = struct2cell(p.Results); %#ok<NASGU>
-input_flags = fieldnames(p.Results);
-eval(['[', sprintf('%s ', input_flags{:}), '] = deal(input_arguments{:});']);
+opts = p.Results;
 
 %Get group sizes
-[R, C, N1] = size(group1);
-[R2, C2, N2] = size(group2);
+[R, C, N1] = size(opts.group1);
+[R2, C2, N2] = size(opts.group2);
 
 %Check that they are the same size and are valid
 assert(R == R2 && C == C2, 'Group dims must be the same');
-assert(any(isfinite(group1),'all') && any(isfinite(group2),'all'), 'Groups must have at least one valid numeric data')
+assert(any(isfinite(opts.group1),'all') && any(isfinite(opts.group2),'all'), 'Groups must have at least one valid numeric data')
 
 %Reshape to linear
-g1_redim = reshape(group1, size(group1,1)*size(group1,2), size(group1,3));
-g2_redim = reshape(group2, size(group2,1)*size(group2,2), size(group2,3));
+g1_redim = reshape(opts.group1, size(opts.group1,1)*size(opts.group1,2), size(opts.group1,3));
+g2_redim = reshape(opts.group2, size(opts.group2,1)*size(opts.group2,2), size(opts.group2,3));
 
 %% Conduct group comparison testing
 [linear_sigbins, linear_p_adj, linear_p_values] = FDR_1D(g1_redim, g2_redim,...
-    'FDR',FDR,'method',method,'paired',paired,'nonparam',nonparam,'ploton',false);
+    'FDR',opts.FDR,'method',opts.method,'paired',opts.paired,'nonparam',opts.nonparam,'ploton',false);
 
 %Reshape output
 sigbins = reshape(linear_sigbins, R, C);
@@ -84,7 +82,7 @@ p_adj = reshape(linear_p_adj, R, C);
 p_values = reshape(linear_p_values, R, C);
 
 %% Plot results
-if ploton
+if opts.ploton
     g1_mean = mean(reshape(g1_redim, R, C, N1), 3, 'omitnan');
     g2_mean = mean(reshape(g2_redim, R, C, N2), 3, 'omitnan');
 
@@ -146,28 +144,28 @@ if ploton
     if ~isempty(r)
         plot(c,r,'x')
     end
-    clim([0 FDR*2])
+    clim([0 opts.FDR*2])
     colormap(ax(4),'parula');
     pos = ax(4).Position;
     colorbar(ax(4));
     ax(4).Position = pos;
 
     % Add subplot title
-    if paired
+    if opts.paired
         pstring = 'Paired';
     else
         pstring = 'Unpaired';
     end
 
-    if nonparam
+    if opts.nonparam
         npstring = 'Nonparametric';
     else
         npstring = 'Parametric';
     end
 
-    mstring = [upper(method(1)) method(2:end)]; %#ok<FNCOLND>
+    mstring = [upper(opts.method(1)) opts.method(2:end)]; %#ok<FNCOLND>
 
-    t = suptitle([mstring ' ' pstring ' ' npstring ' Test with FDR of ' num2str(FDR)]);
+    t = suptitle([mstring ' ' pstring ' ' npstring ' Test with FDR of ' num2str(opts.FDR)]);
     t.FontSize = 20;
 end
 end

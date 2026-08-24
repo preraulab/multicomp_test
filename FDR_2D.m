@@ -7,7 +7,7 @@ function [sigbins, p_adj, p_values] = FDR_2D(varargin)
 % Input:
 %   - group1: Numeric <2D array dimensions> x <trials> array representing the first group of data.
 %   - group2: Numeric <2D array dimensions> x <trials> array representing the second group of data.
-%   - FDR: (Optional) False Discovery Rate (FDR) threshold for multiple testing correction. Default is 0.1.
+%   - FDR: (Optional) False Discovery Rate (FDR) threshold for multiple testing correction. Default is 0.05.
 %   - method: (Optional) 'dependent' will use the Benjamini & Yekutieli (2001) procedure,
 %     and 'independent' will use the Benjamini & Hochberg (1995) procedure that assumes data are independent or positively
 %     dependent. Default is 'dependent'
@@ -27,6 +27,14 @@ function [sigbins, p_adj, p_values] = FDR_2D(varargin)
 % The FDR procedure is computed using a modified version of fdr_bh() authored by Groppe, D.M.
 %   https://www.mathworks.com/matlabcentral/fileexchange/27418-fdr_bh
 %
+% Notes:
+%   Pixels are tested independently by FDR_1D, which handles missing data
+%   by complete-case deletion and returns NaN for pixels with nothing left
+%   to compare (those are dropped from the FDR family). For SOPHs a NaN
+%   means the subject spent less than min_time_in_bin in that SO-power
+%   bin, so the peak RATE there is undefined -- which is distinct from a
+%   real observed 0. See the FDR_1D notes.
+%
 % Example:
 %   %Run FDR_2D() for demo data
 %
@@ -42,16 +50,16 @@ if nargin == 0
     %Set a fixed random seed so both demos have the same data
     seed = 2023;
     rng(seed);
-    demo_func(.1,true,true,'dependent');
+    demo_func(.05,true,true,'dependent');
     rng(seed);
-    demo_func(.1,false,false,'independent');
+    demo_func(.05,false,false,'independent');
     return;
 end
 
 p = inputParser;
 addRequired(p,'group1', @(x)validateattributes(x,{'numeric'},{'nonempty','ndims',3}));
 addRequired(p,'group2', @(x)validateattributes(x,{'numeric'},{'nonempty','ndims',3}));
-addOptional(p,'FDR', 0.1, @(x)validateattributes(x,{'numeric'},{'real','finite','positive','scalar','<=',1}));
+addOptional(p,'FDR', 0.05, @(x)validateattributes(x,{'numeric'},{'real','finite','positive','scalar','<=',1}));
 addOptional(p,'method', 'dependent', @(x) any(validatestring(x, {'dependent','independent'})));
 addOptional(p,'paired', false, @(x) validateattributes(x, {'logical', 'numeric'}, {'binary'}));
 addOptional(p,'nonparam', true, @(x) validateattributes(x, {'logical', 'numeric'}, {'binary'}));

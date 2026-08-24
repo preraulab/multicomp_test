@@ -7,7 +7,7 @@ function [sigbins_all, p_adj, p_values] = FDR_1D(varargin)
 % Input:
 %   - group1: Numeric 1D vector x <trials> array representing the first group of data.
 %   - group2: Numeric 1D vector x <trials> array representing the second group of data.
-%   - FDR: (Optional) False Discovery Rate (FDR) threshold for multiple testing correction. Default is 0.1.
+%   - FDR: (Optional) False Discovery Rate (FDR) threshold for multiple testing correction. Default is 0.05.
 %   - method: (Optional) 'dependent' will use the Benjamini & Yekutieli (2001) procedure,
 %     and 'independent' will use the Benjamini & Hochberg (1995) procedure that assumes data are independent or positively
 %     dependent. Default is 'dependent'
@@ -24,6 +24,21 @@ function [sigbins_all, p_adj, p_values] = FDR_1D(varargin)
 %   - p_adj: 1D Vector of adjusted p-values after multiple testing correction.
 %   - p_values: 1D vector of raw p-values.
 %
+% Notes:
+%   Missing data (NaN, and Inf which is converted to NaN on entry) is
+%   handled by complete-case deletion, which is what ranksum, signrank,
+%   ttest2 and ttest all do natively -- NaNs are NOT imputed. A bin with
+%   nothing left to compare (no observations in one group, or for a
+%   paired test no position where both groups are observed) is untestable
+%   and returns a NaN p-value; fdr_bh drops those from the family, so they
+%   do not count toward m and cannot be flagged significant.
+%
+%   The effective n therefore varies from bin to bin. Thinly-observed bins
+%   still enter the family and inflate m; a rank test on few observations
+%   simply cannot reach a small p (n = 2 vs 2 bottoms out at p = 1/3), so
+%   this costs sensitivity rather than creating false positives. Mask
+%   low-coverage bins upstream if that matters for your analysis.
+%
 % Example:
 %   %Run FDR_1D() for demo data
 %
@@ -39,16 +54,16 @@ if nargin == 0
     %Set a fixed random seed so both demos have the same data
     seed = 2023;
     rng(seed);
-    demo_func(.1,true,true,'dependent');
+    demo_func(.05,true,true,'dependent');
     rng(seed);
-    demo_func(.1,false,false,'independent');
+    demo_func(.05,false,false,'independent');
     return;
 end
 
 p = inputParser;
 addRequired(p,'group1', @(x)validateattributes(x,{'numeric'},{'nonempty','2d'}));
 addRequired(p,'group2', @(x)validateattributes(x,{'numeric'},{'nonempty','2d'}));
-addOptional(p,'FDR', 0.1, @(x)validateattributes(x,{'numeric'},{'real','finite','positive','scalar','<=',1}));
+addOptional(p,'FDR', 0.05, @(x)validateattributes(x,{'numeric'},{'real','finite','positive','scalar','<=',1}));
 addOptional(p,'method', 'dependent', @(x) any(validatestring(x, {'dependent','independent'})));
 addOptional(p,'paired', false, @(x) validateattributes(x, {'logical', 'numeric'}, {'binary'}));
 addOptional(p,'nonparam', true, @(x) validateattributes(x, {'logical', 'numeric'}, {'binary'}));
@@ -75,14 +90,34 @@ if opts.nonparam
         g1 = opts.group1(ii, :);
         g2 = opts.group2(ii, :);
 
-        if all(isnan(g1)) && all(isnan(g2))
+        % A bin with nothing left to compare is untestable: it gets a NaN
+        % p-value, and fdr_bh drops it from the family (it does not count
+        % toward m). Unpaired needs at least one observation in each
+        % group; paired needs at least one position where BOTH are
+        % observed, since signrank errors out ('No data remaining after
+        % removal of NaNs') rather than returning NaN when every pair is
+        % broken.
+        %
+        % Missing values are otherwise left alone. ranksum and signrank
+        % both drop NaNs themselves -- ranksum by deletion, signrank
+        % pairwise -- which is the standard complete-case handling for a
+        % rank test. An earlier version replaced NaNs with 0 before
+        % testing, which was wrong here twice over: a SOPH bin is a RATE
+        % whose NaN means "under min_time_in_bin, rate undefined" while 0
+        % is a real observed value ("occupied the bin, no peaks"), so the
+        % fill collapsed a missing-data code onto a legitimate
+        % measurement; and because it was gated on `any(isnan(g1)) ||
+        % all(isnan(g2))` it fired for missingness in group 1 but not in
+        % group 2, making p depend on the order the groups were passed in.
+        if opts.paired
+            testable = any(isfinite(g1) & isfinite(g2));
+        else
+            testable = any(isfinite(g1)) && any(isfinite(g2));
+        end
+
+        if ~testable
             p_values(ii) = nan;
         else
-            if any(isnan(g1)) || all(isnan(g2))
-                g1(isnan(g1)) = 0;
-                g2(isnan(g2)) = 0;
-            end
-
             p_values(ii) = testfun(g1, g2);
         end
     end

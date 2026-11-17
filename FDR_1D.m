@@ -141,8 +141,9 @@ end
 
 [~,~,~,p_adj] = fdr_bh(p_values, opts.FDR, method_string);
 
-%Find the significant bins
-sigbins_all = p_adj < opts.FDR;
+%Find the significant bins. A bin is significant when its adjusted p-value
+%is at or below the FDR level, the rule fdr_bh applies (p_sorted<=thresh)
+sigbins_all = p_adj <= opts.FDR;
 
 %% Plot results
 if opts.ploton
